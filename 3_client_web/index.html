@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JohnnyWalker</title>
+    <title>JavaChat DM</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -14,11 +14,9 @@
     <div id="layer-login" class="absolute-full z-50 flex flex-col items-center justify-center p-6 bg-slate-900">
         <div class="login-container">
             <h2 class="text-2xl font-bold text-white text-center mb-6">Secure Login</h2>
-            
             <div class="mb-4">
-                <input id="inp-ip" type="text" class="input-field" placeholder="Bridge IP (e.g. 192.168.1.5)">
+                <input id="inp-ip" type="text" class="input-field" placeholder="Bridge IP">
             </div>
-
             <div class="mb-4 bg-black h-64 rounded-xl flex items-center justify-center border-2 border-indigo-500/30 overflow-hidden relative">
                 <div id="qr-reader" class="w-full h-full"></div>
                 <div id="camera-placeholder" class="absolute-full flex items-center justify-center text-slate-500 flex-col gap-2">
@@ -26,67 +24,37 @@
                     <span>Camera Inactive</span>
                 </div>
             </div>
-
             <div class="grid grid-cols-2 gap-3">
-                <button id="btn-activate-cam" class="btn-primary">
-                    <i data-lucide="camera" class="w-5 h-5"></i> Scan
-                </button>
-                <button id="btn-upload-qr" class="btn-secondary">
-                    <i data-lucide="image" class="w-5 h-5"></i> Gallery
-                </button>
+                <button id="btn-activate-cam" class="btn-primary"><i data-lucide="camera" class="w-5 h-5"></i> Scan</button>
+                <button id="btn-upload-qr" class="btn-secondary"><i data-lucide="image" class="w-5 h-5"></i> Gallery</button>
             </div>
-            
             <input type="file" id="inp-file-qr" accept="image/*" class="hidden">
         </div>
     </div>
 
     <div id="layer-app" class="flex h-full w-full relative hidden">
-        
         <aside id="sidebar-panel" class="sidebar w-full md:w-80 absolute md:relative">
             <div class="p-4 border-b border-slate-800 glass-header">
-                <h1 class="font-bold text-lg flex items-center gap-2 text-white">
-                    <div class="bg-indigo-600 p-1.5 rounded-lg">
-                        <i data-lucide="users" class="w-5 h-5 text-white"></i>
-                    </div>
-                    Contacts
-                </h1>
+                <h1 class="font-bold text-lg flex items-center gap-2 text-white">Contacts</h1>
             </div>
             <div id="sidebar-list" class="flex-1 overflow-y-auto p-2">
-                <div class="text-center text-slate-500 text-sm mt-10 flex flex-col items-center gap-2">
-                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin opacity-50"></i>
-                    <span>Waiting for network...</span>
-                </div>
+                <div class="text-center text-slate-500 text-sm mt-10">Waiting for network...</div>
             </div>
         </aside>
-
         <main id="main-chat-panel" class="chat-panel w-full md:flex-1 hidden md:flex">
-            
             <header class="glass-header flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
-                    <button id="btn-back-contact" class="md:hidden p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white">
-                        <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                    </button>
-                    <div class="flex flex-col">
-                        <h2 id="chat-header-title" class="font-bold text-slate-100 text-lg">Select a contact</h2>
-                        <div id="connection-status" class="text-xs text-green-500 font-mono">● Online</div>
+                    <button id="btn-back-contact" class="md:hidden p-2 text-slate-400"><i data-lucide="chevron-left"></i></button>
+                    <div>
+                        <h2 id="chat-header-title" class="font-bold text-slate-100">Select Contact</h2>
+                        <div id="connection-status" class="text-xs text-green-500">● Online</div>
                     </div>
                 </div>
             </header>
-
-            <div id="chat-area" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                <div class="flex h-full items-center justify-center text-slate-600 flex-col gap-3">
-                    <div class="bg-slate-900 p-4 rounded-full">
-                        <i data-lucide="message-circle" class="w-8 h-8 text-indigo-500"></i>
-                    </div>
-                    <p>Start a conversation</p>
-                </div>
-            </div>
-
+            <div id="chat-area" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar"></div>
             <form id="form-chat" class="p-3 bg-slate-900 border-t border-slate-800 flex gap-2 shrink-0">
                 <input id="inp-message" type="text" class="input-field text-left pl-4" placeholder="Type a message..." autocomplete="off">
-                <button type="submit" class="btn-primary rounded-xl px-3 shadow-lg">
-                    <i data-lucide="send" class="w-5 h-5"></i>
-                </button>
+                <button type="submit" class="btn-primary rounded-xl px-3"><i data-lucide="send" class="w-5 h-5"></i></button>
             </form>
         </main>
     </div>
