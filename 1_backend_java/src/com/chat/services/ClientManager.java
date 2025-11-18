@@ -1,8 +1,6 @@
 package com.chat.services;
 
-import com.chat.models.Message;
 import com.chat.threads.ClientWorker;
-import com.chat.utils.Logger;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.List;
@@ -13,13 +11,6 @@ public class ClientManager {
     public static void register(String username, ClientWorker worker) {
         activeClients.put(username, worker);
         broadcastUserList();
-        
-        List<Message> pending = StorageManager.getPendingMessages(username);
-        if (pending != null) {
-            for (Message m : pending) {
-                worker.sendRawMessage("DM:" + m.getFrom() + ":" + m.getContent());
-            }
-        }
     }
 
     public static void unregister(String username) {
@@ -30,21 +21,34 @@ public class ClientManager {
     }
 
     public static void sendPrivateMessage(String sender, String recipient, String content) {
-        ClientWorker recipientWorker = activeClients.get(recipient);
-        Message msg = new Message(sender, recipient, content);
+        // 1. Save to MongoDB (Permanent Storage)
+        DatabaseManager.saveMessage(sender, recipient, content);
 
+        // 2. Deliver Real-time if online
+        ClientWorker recipientWorker = activeClients.get(recipient);
         if (recipientWorker != null) {
             recipientWorker.sendRawMessage("DM:" + sender + ":" + content);
-        } else {
-            StorageManager.saveMessage(recipient, msg);
+        }
+    }
+    
+    // Called when User A clicks on User B to load old chats
+    public static void loadHistoryFor(String requestor, String targetUser) {
+        ClientWorker worker = activeClients.get(requestor);
+        if (worker != null) {
+            List<String> history = DatabaseManager.getChatHistory(requestor, targetUser);
+            for (String packet : history) {
+                worker.sendRawMessage(packet);
+            }
         }
     }
 
     private static void broadcastUserList() {
         StringBuilder sb = new StringBuilder("USERS:");
+        List<String> allUsers = DatabaseManager.getAllUsernames();
         
-        for (String user : activeClients.keySet()) {
-            sb.append(user).append("(Online)").append(",");
+        for (String user : allUsers) {
+            boolean isOnline = activeClients.containsKey(user);
+            sb.append(user).append(isOnline ? "(Online)" : "(Offline)").append(",");
         }
         
         String listPacket = sb.toString();

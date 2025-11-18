@@ -2,6 +2,7 @@ package com.chat.threads;
 
 import com.chat.services.ClientManager;
 import com.chat.services.AuthManager;
+import com.chat.services.DatabaseManager; // Import DB
 import com.chat.constants.Messages;
 import com.chat.utils.Logger;
 import java.io.*;
@@ -27,14 +28,19 @@ public class ClientWorker extends Thread {
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
+                
+                // 1. Send DM
                 if (inputLine.startsWith("TO:")) {
                     String[] parts = inputLine.split(":", 3);
                     if (parts.length == 3) {
-                        String recipient = parts[1];
-                        String content = parts[2];
-                        Logger.info(username + " -> " + recipient + ": " + content);
-                        ClientManager.sendPrivateMessage(username, recipient, content);
+                        ClientManager.sendPrivateMessage(username, parts[1], parts[2]);
                     }
+                }
+                
+                // 2. Request History (Client asks for chats with specific person)
+                if (inputLine.startsWith("HISTORY:")) {
+                    String target = inputLine.split(":")[1];
+                    ClientManager.loadHistoryFor(username, target);
                 }
             }
         } catch (IOException e) {
@@ -48,13 +54,20 @@ public class ClientWorker extends Thread {
     private boolean authenticate() throws IOException {
         out.println(Messages.AUTH_REQ);
         String line = in.readLine();
-        if (line != null && line.startsWith("AUTH:")) {
-            String token = line.substring(5).trim();
-            String user = AuthManager.validate(token);
-            if (user != null) {
-                this.username = user;
-                out.println("AUTH_SUCCESS:" + user);
-                return true;
+        
+        // Expecting: AUTH:LOGIN:username:password
+        if (line != null && line.startsWith("AUTH:LOGIN:")) {
+            String[] parts = line.split(":");
+            // parts[0]=AUTH, parts[1]=LOGIN, parts[2]=user, parts[3]=pass
+            if (parts.length == 4) {
+                String user = parts[2];
+                String pass = parts[3];
+                
+                if (AuthManager.verifyLogin(user, pass)) {
+                    this.username = user;
+                    out.println("AUTH_SUCCESS:" + user);
+                    return true;
+                }
             }
         }
         out.println(Messages.AUTH_FAIL);

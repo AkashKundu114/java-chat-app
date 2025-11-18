@@ -1,27 +1,22 @@
 package com.chat.services;
 
 import com.chat.utils.Logger;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthManager {
-    private static final Map<String, String> validTokens = new ConcurrentHashMap<>();
-    private static final Map<String, String> registeredUsers = new ConcurrentHashMap<>();
-
-    public static String registerUser(String username) {
-        String token = UUID.randomUUID().toString();
-        validTokens.put(token, username);
-        registeredUsers.put(username, token);
-        Logger.info("REGISTERED: " + username);
-        return token;
+    
+    // Registers a PERMANENT user in MongoDB
+    public static boolean registerPermanentUser(String username, String password) {
+        boolean success = DatabaseManager.createUser(username, password);
+        if (success) {
+            Logger.info("DB: Created User " + username);
+        } else {
+            Logger.error("DB: User " + username + " already exists!");
+        }
+        return success;
     }
 
-    public static String validate(String token) {
-        return validTokens.get(token);
-    }
-
-    public static Map<String, String> getAllUsers() {
-        return validTokens; 
+    // Verifies credentials from the QR code (LOGIN:user:pass)
+    public static boolean verifyLogin(String username, String password) {
+        return DatabaseManager.verifyUser(username, password);
     }
 }
