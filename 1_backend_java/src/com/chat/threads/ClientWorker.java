@@ -1,4 +1,5 @@
 package com.chat.threads;
+
 import com.chat.services.ClientManager;
 import com.chat.services.AuthManager;
 import com.chat.constants.Messages;
@@ -21,17 +22,26 @@ public class ClientWorker extends Thread {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             if (!authenticate()) { socket.close(); return; }
+            
+            ClientManager.register(username, this);
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                Logger.info("MSG from " + username + ": " + inputLine);
-                ClientManager.broadcast("[" + username + "]: " + inputLine, this);
+                if (inputLine.startsWith("TO:")) {
+                    String[] parts = inputLine.split(":", 3);
+                    if (parts.length == 3) {
+                        String recipient = parts[1];
+                        String content = parts[2];
+                        Logger.info(username + " -> " + recipient + ": " + content);
+                        ClientManager.sendPrivateMessage(username, recipient, content);
+                    }
+                }
             }
         } catch (IOException e) {
-            Logger.error("Client dropped.");
+            Logger.error("Client dropped: " + username);
         } finally {
+            ClientManager.unregister(username);
             try { socket.close(); } catch (IOException e) {}
-            ClientManager.remove(this);
         }
     }
 
@@ -44,7 +54,6 @@ public class ClientWorker extends Thread {
             if (user != null) {
                 this.username = user;
                 out.println("AUTH_SUCCESS:" + user);
-                Logger.info(user + " logged in.");
                 return true;
             }
         }

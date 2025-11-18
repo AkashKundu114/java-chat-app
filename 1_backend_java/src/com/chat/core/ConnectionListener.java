@@ -1,7 +1,6 @@
-package com.chat.core;
+﻿package com.chat.core;
 
 import com.chat.config.ServerConfig;
-import com.chat.services.ClientManager;
 import com.chat.threads.ClientWorker;
 import com.chat.utils.Logger;
 import java.io.IOException;
@@ -17,13 +16,8 @@ public class ConnectionListener {
             while (true) {
                 Socket clientSocket = server.accept();
                 
-                // Create new thread for client (Inheritance)
                 ClientWorker worker = new ClientWorker(clientSocket);
-                
-                // Add to active list
-                ClientManager.add(worker);
-                
-                // Start the thread
+
                 worker.start();
             }
             
