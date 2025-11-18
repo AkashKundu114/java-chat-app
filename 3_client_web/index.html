@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JavaChat DM</title>
-    
-    <!-- Link to the Separate CSS File -->
+    <title>JavaChat Debug</title>
     <link rel="stylesheet" href="css/style.css">
-    
-    <!-- Icons and QR Library -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <!-- LOGIN LAYER -->
     <div id="layer-login">
         <div class="login-container">
-            <h2 style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem; color: white;">Secure Login</h2>
+            <h2 style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: white;">Secure Login</h2>
             
+            <div id="debug-console" style="background: #000; color: #00ff00; font-family: monospace; font-size: 10px; height: 80px; overflow-y: auto; padding: 5px; border: 1px solid #333; margin-bottom: 10px; border-radius: 5px;">
+                > System Ready...
+            </div>
+
             <div style="margin-bottom: 1rem;">
                 <input id="inp-ip" type="text" class="input-field" placeholder="Bridge IP (e.g. 192.168.1.5)">
             </div>
 
-            <!-- Camera Area -->
             <div style="margin-bottom: 1rem; background: #000; height: 250px; border-radius: 1rem; position: relative; overflow: hidden; border: 2px solid #334155;">
                 <div id="qr-reader" style="width:100%; height:100%;"></div>
                 <div id="camera-placeholder" style="position: absolute; top:0; left:0; width:100%; height:100%; display: flex; align-items: center; justify-content: center; color: #64748b; flex-direction: column;">
@@ -32,12 +31,10 @@
                 </div>
             </div>
 
-            <!-- Actions -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button id="btn-activate-cam" class="btn-primary">
                     <i data-lucide="camera" style="width:20px;"></i> Scan
                 </button>
-                
                 <button id="btn-upload-qr" class="btn-secondary">
                     <i data-lucide="image" style="width:20px;"></i> Gallery
                 </button>
@@ -47,10 +44,7 @@
         </div>
     </div>
 
-    <!-- APP LAYER (Hidden by default via CSS class .hidden) -->
     <div id="layer-app" class="hidden">
-        
-        <!-- SIDEBAR -->
         <aside id="sidebar-panel" class="sidebar">
             <div class="glass-header">
                 <h1 style="font-size: 1.125rem; font-weight: bold; display: flex; align-items: center; gap: 10px; color: white;">
@@ -64,29 +58,19 @@
             </div>
         </aside>
 
-        <!-- CHAT AREA -->
         <main id="main-chat-panel" class="chat-panel hidden">
-            
-            <!-- Chat Header -->
             <header class="glass-header">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button id="btn-back-contact" style="background: none; border: none; color: #94a3b8; cursor: pointer;">
                         <i data-lucide="chevron-left" style="width: 24px; height: 24px;"></i>
                     </button>
-                    
                     <div>
                         <h2 id="chat-header-title" style="font-weight: bold; font-size: 1rem; color: #f1f5f9;">Select a contact</h2>
                         <div id="connection-status" style="font-size: 0.75rem; color: #22c55e;">● Online</div>
                     </div>
                 </div>
             </header>
-
-            <!-- Messages -->
-            <div id="chat-area" class="no-scrollbar" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                <!-- Messages will appear here -->
-            </div>
-
-            <!-- Input -->
+            <div id="chat-area" class="no-scrollbar" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
             <form id="form-chat" style="padding: 0.75rem; background-color: #0f172a; border-top: 1px solid #1e293b; display: flex; gap: 0.5rem;">
                 <input id="inp-message" type="text" class="input-field" style="margin-bottom: 0; text-align: left;" placeholder="Type a message..." autocomplete="off">
                 <button type="submit" class="btn-primary" style="width: auto; padding: 0 1.5rem;">
@@ -96,7 +80,6 @@
         </main>
     </div>
 
-    <!-- Logic Scripts -->
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
