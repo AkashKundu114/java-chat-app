@@ -153,7 +153,7 @@ Done! You are logged in.
 
 ---
 
-## 📸 Screenshots (Add yours here)
+## 📸 Screenshots (Soon..)
 
 - Login screen  
 - Chat interface  
