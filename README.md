@@ -72,7 +72,7 @@ Designed to demonstrate **concurrency**, **raw networking**, **offline message d
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
 ### ⬇️ Clone Repository
 ```bash
@@ -83,7 +83,97 @@ cd java-chat-app
 ---
 
 ## 1️⃣ Start Java Backend (Terminal 1)
+
+Navigate:
 ```bash
 cd 1_backend_java
 mkdir -p bin
 ```
+
+Compile:
+```bash
+javac -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java
+```
+
+Run:
+```bash
+java -cp bin com.chat.Main
+```
+
+Register a User (copy the token):
+```
+register Akash
+```
+
+---
+
+## 2️⃣ Start Node Bridge (Terminal 2)
+
+```bash
+cd 2_bridge_node
+npm install
+npm start
+```
+
+---
+
+## 3️⃣ (Optional) Expose to Internet With Ngrok (Terminal 3)
+
+```bash
+ngrok http 8080
+```
+
+Copy the forwarding URL (e.g., `https://abc.ngrok-free.app`).
+
+---
+
+## 4️⃣ Launch the Web Client
+
+Host the web folder:
+
+**Option 1 — Netlify Drop:**  
+Drag `3_client_web` into https://app.netlify.com/drop  
+
+**Option 2 — Local Hosting:**  
+```bash
+python -m http.server 8000
+```
+
+---
+
+## 🔑 Login Instructions
+
+1. Open the website on your phone  
+2. Enter the Ngrok/localhost URL in the “Bridge IP” field  
+3. On your PC, open `admin.html`  
+4. Paste token → Generate QR  
+5. Scan QR using the phone  
+
+Done! You are logged in.
+
+---
+
+## 📸 Screenshots (Add yours here)
+
+- Login screen  
+- Chat interface  
+- DM list  
+- Admin console  
+- QR login  
+
+---
+
+## 🤝 Contributing
+
+```text
+1. Fork the project
+2. Create a feature branch (git checkout -b feature/NewFeature)
+3. Commit changes (git commit -m "Add NewFeature")
+4. Push to branch (git push origin feature/NewFeature)
+5. Open a Pull Request
+```
+
+---
+
+## 📝 License
+Distributed under the **MIT License**. See `LICENSE` for more information.
