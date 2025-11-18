@@ -7,6 +7,14 @@ export class DMManager {
         this.activeChatUser = null;
         this.chats = {}; 
         this.users = []; 
+
+        if(DOM.backBtn) {
+            DOM.backBtn.addEventListener('click', () => {
+                this.toggleMobileView('list');
+                this.activeChatUser = null;
+                this.renderSidebar();
+            });
+        }
     }
 
     updateUserList(rawString) {
@@ -15,7 +23,8 @@ export class DMManager {
 
         this.users = listPart.split(',').map(u => {
             const match = u.match(/(.*)\((.*)\)/);
-            return { name: match[1], status: match[2] };
+            if(match) return { name: match[1], status: match[2] };
+            return { name: u, status: 'Unknown' };
         });
         this.renderSidebar();
     }
@@ -26,25 +35,59 @@ export class DMManager {
             if (u.name === this.currentUser) return; 
 
             const div = document.createElement('div');
-            div.className = `p-3 rounded-lg cursor-pointer hover:bg-slate-800 flex justify-between items-center ${this.activeChatUser === u.name ? 'bg-indigo-900/50 border border-indigo-500/50' : ''}`;
+            const isActive = this.activeChatUser === u.name;
+            
+            div.className = `contact-item ${isActive ? 'active' : ''}`;
+            
             div.innerHTML = `
-                <span class="text-white font-medium">${u.name}</span>
-                <span class="text-[10px] ${u.status === 'Online' ? 'text-green-400' : 'text-slate-500'}">● ${u.status}</span>
+                <div class="flex items-center gap-3">
+                    <div class="avatar ${isActive ? 'bg-indigo-600' : 'bg-slate-700'}">
+                        ${u.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-white font-medium text-sm">${u.name}</span>
+                        <span class="text-[10px] ${u.status === 'Online' ? 'text-green-400' : 'text-slate-500'}">
+                            ${u.status === 'Online' ? '● Online' : '○ Offline'}
+                        </span>
+                    </div>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
             `;
-            div.onclick = () => this.openChat(u.name);
+            
+            div.onclick = () => {
+                this.openChat(u.name);
+                lucide.createIcons();
+            };
+            
             DOM.sidebarList.appendChild(div);
         });
+        lucide.createIcons();
     }
 
     openChat(username) {
         this.activeChatUser = username;
-        DOM.chatHeaderTitle.innerText = `Chat with ${username}`;
+        DOM.chatHeaderTitle.innerText = username;
         DOM.chatArea.innerHTML = ""; 
+        
+        this.toggleMobileView('chat');
         this.renderSidebar(); 
         
         if (!this.chats[username]) this.chats[username] = [];
         this.chats[username].forEach(msg => this.renderMessageBubble(msg));
         DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
+    }
+
+    toggleMobileView(view) {
+        if (view === 'chat') {
+            DOM.sidebarPanel.classList.add('hidden');
+            DOM.mainChatPanel.classList.remove('hidden');
+            DOM.mainChatPanel.classList.add('flex');
+        } else {
+            DOM.sidebarPanel.classList.remove('hidden');
+            DOM.sidebarPanel.classList.add('flex');
+            DOM.mainChatPanel.classList.add('hidden');
+            DOM.mainChatPanel.classList.remove('flex');
+        }
     }
 
     handleIncomingDM(sender, text) {
@@ -54,7 +97,6 @@ export class DMManager {
         if (this.activeChatUser === sender) {
             this.renderMessageBubble({ sender: sender, text: text, isMe: false });
             DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
-        } else {
         }
     }
 
@@ -73,8 +115,9 @@ export class DMManager {
     renderMessageBubble(msg) {
         const div = document.createElement('div');
         div.className = `flex w-full mb-2 ${msg.isMe ? 'justify-end' : 'justify-start'}`;
+        
         div.innerHTML = `
-            <div class="max-w-[75%] px-4 py-2 rounded-2xl text-sm ${msg.isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}">
+            <div class="msg-bubble ${msg.isMe ? 'msg-me' : 'msg-other'}">
                 ${msg.text}
             </div>
         `;
