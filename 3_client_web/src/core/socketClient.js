@@ -10,10 +10,14 @@ export class SocketClient {
     connect(inputAddress) {
         let url;
 
-        if (inputAddress.includes("ngrok")) {
+        // 1. Check if it's a Secure Tunnel (Ngrok OR LocalTunnel)
+        if (inputAddress.includes("ngrok") || inputAddress.includes("loca.lt")) {
+            // Strip 'https://' if user pasted it
             const cleanUrl = inputAddress.replace(/^https?:\/\//, '');
+            // Force Secure WebSocket (WSS)
             url = `wss://${cleanUrl}`; 
         } else {
+            // 2. Local Network IP (e.g., 192.168.1.5)
             url = `ws://${inputAddress}:${SETTINGS.BRIDGE_PORT}`;
         }
 

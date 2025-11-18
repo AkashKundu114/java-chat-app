@@ -38,12 +38,9 @@ export class DMManager {
             const isActive = this.activeChatUser === u.name;
             
             div.className = `contact-item ${isActive ? 'active' : ''}`;
-            
             div.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <div class="avatar ${isActive ? 'bg-indigo-600' : 'bg-slate-700'}">
-                        ${u.name.charAt(0).toUpperCase()}
-                    </div>
+                    <div class="avatar">${u.name.charAt(0).toUpperCase()}</div>
                     <div class="flex flex-col">
                         <span class="text-white font-medium text-sm">${u.name}</span>
                         <span class="text-[10px] ${u.status === 'Online' ? 'text-green-400' : 'text-slate-500'}">
@@ -51,14 +48,12 @@ export class DMManager {
                         </span>
                     </div>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
             `;
             
             div.onclick = () => {
                 this.openChat(u.name);
                 lucide.createIcons();
             };
-            
             DOM.sidebarList.appendChild(div);
         });
         lucide.createIcons();
@@ -72,9 +67,11 @@ export class DMManager {
         this.toggleMobileView('chat');
         this.renderSidebar(); 
         
-        if (!this.chats[username]) this.chats[username] = [];
-        this.chats[username].forEach(msg => this.renderMessageBubble(msg));
-        DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
+        // 1. Clear local history display to avoid duplicates before fetch
+        // (Optional: You could cache, but simplified here)
+        
+        // 2. Ask Server for history
+        this.onSendMessage(`HISTORY:${username}`);
     }
 
     toggleMobileView(view) {
@@ -91,33 +88,30 @@ export class DMManager {
     }
 
     handleIncomingDM(sender, text) {
-        if (!this.chats[sender]) this.chats[sender] = [];
-        this.chats[sender].push({ sender: sender, text: text, isMe: false });
-
-        if (this.activeChatUser === sender) {
-            this.renderMessageBubble({ sender: sender, text: text, isMe: false });
+        // If it's a message FROM the person I'm talking to, OR a message I sent TO them (history echo)
+        const otherPerson = (sender === this.currentUser) ? this.activeChatUser : sender;
+        
+        // Only render if it belongs to current active chat
+        if (this.activeChatUser === sender || (sender === this.currentUser && this.activeChatUser)) {
+            const isMe = (sender === this.currentUser);
+            this.renderMessageBubble({ text: text, isMe: isMe });
             DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
         }
     }
 
     sendDM(text) {
         if (!this.activeChatUser) return;
-        
-        if (!this.chats[this.activeChatUser]) this.chats[this.activeChatUser] = [];
-        this.chats[this.activeChatUser].push({ sender: "Me", text: text, isMe: true });
-        
-        this.renderMessageBubble({ sender: "Me", text: text, isMe: true });
+        // We render optimistically
+        this.renderMessageBubble({ text: text, isMe: true });
         DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
-
         this.onSendMessage(`TO:${this.activeChatUser}:${text}`);
     }
 
     renderMessageBubble(msg) {
         const div = document.createElement('div');
-        div.className = `flex w-full mb-2 ${msg.isMe ? 'justify-end' : 'justify-start'}`;
-        
+        div.className = `msg-wrapper ${msg.isMe ? 'right' : 'left'}`;
         div.innerHTML = `
-            <div class="msg-bubble ${msg.isMe ? 'msg-me' : 'msg-other'}">
+            <div class="msg ${msg.isMe ? 'msg-me' : 'msg-other'}">
                 ${msg.text}
             </div>
         `;

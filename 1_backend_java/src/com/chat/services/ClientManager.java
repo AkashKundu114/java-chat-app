@@ -21,41 +21,32 @@ public class ClientManager {
     }
 
     public static void sendPrivateMessage(String sender, String recipient, String content) {
-        // 1. Save to MongoDB (Permanent Storage)
         DatabaseManager.saveMessage(sender, recipient, content);
 
-        // 2. Deliver Real-time if online
-        ClientWorker recipientWorker = activeClients.get(recipient);
-        if (recipientWorker != null) {
-            recipientWorker.sendRawMessage("DM:" + sender + ":" + content);
-        }
+        ClientWorker worker = activeClients.get(recipient);
+        if (worker != null) worker.sendRawMessage("DM:" + sender + ":" + content);
     }
     
-    // Called when User A clicks on User B to load old chats
-    public static void loadHistoryFor(String requestor, String targetUser) {
-        ClientWorker worker = activeClients.get(requestor);
-        if (worker != null) {
-            List<String> history = DatabaseManager.getChatHistory(requestor, targetUser);
-            for (String packet : history) {
-                worker.sendRawMessage(packet);
-            }
-        }
+    public static void loadHistory(String me, String other) {
+        ClientWorker worker = activeClients.get(me);
+        if(worker == null) return;
+        
+        List<String> msgs = DatabaseManager.getHistory(me, other);
+        for(String m : msgs) worker.sendRawMessage(m);
     }
 
     private static void broadcastUserList() {
         StringBuilder sb = new StringBuilder("USERS:");
-        List<String> allUsers = DatabaseManager.getAllUsernames();
         
-        for (String user : allUsers) {
-            boolean isOnline = activeClients.containsKey(user);
-            sb.append(user).append(isOnline ? "(Online)" : "(Offline)").append(",");
-        }
+        List<String> all = DatabaseManager.getAllUsers();
         
-        String listPacket = sb.toString();
-        if (listPacket.endsWith(",")) listPacket = listPacket.substring(0, listPacket.length() - 1);
-
-        for (ClientWorker worker : activeClients.values()) {
-            worker.sendRawMessage(listPacket);
+        for (String u : all) {
+            boolean online = activeClients.containsKey(u);
+            sb.append(u).append(online ? "(Online)" : "(Offline)").append(",");
         }
+        String packet = sb.toString();
+        if(packet.endsWith(",")) packet = packet.substring(0, packet.length()-1);
+        
+        for(ClientWorker w : activeClients.values()) w.sendRawMessage(packet);
     }
 }
