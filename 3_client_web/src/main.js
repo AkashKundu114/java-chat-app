@@ -4,13 +4,30 @@ import { SocketClient } from './core/socketClient.js';
 import { QRManager } from './managers/qrManager.js';
 import { DMManager } from './managers/dmManager.js';
 
+// Import settings to get the default IP
+import { SETTINGS } from './config/settings.js'; 
+
 lucide.createIcons();
 
+// --- Initialization Logic ---
+const inpMsg = document.getElementById('inp-message');
+
+// FIX: Automatically fill the IP field on load
+document.addEventListener('DOMContentLoaded', () => {
+    const ipInput = document.getElementById('inp-ip');
+    if (ipInput && SETTINGS.DEFAULT_IP) {
+        ipInput.value = SETTINGS.DEFAULT_IP;
+        // Also update the placeholder text if you want
+        ipInput.placeholder = SETTINGS.DEFAULT_IP; 
+    }
+});
+// ----------------------------
+
+
 // --- EMOJI LOGIC ---
-const emojis = ["😀","😂","😍","🥺","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","🙌","✨","💩","🤡"];
+const emojis = ["😀","😂","😍","🥺","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","🙌","✨","💩","🤡","💀","💪","🙏","👋","🌹","🍀"];
 const emojiPicker = document.getElementById('emoji-picker');
 const btnEmoji = document.getElementById('btn-emoji');
-const inpMsg = document.getElementById('inp-message');
 
 // 1. Build Picker
 emojis.forEach(em => {
@@ -38,22 +55,24 @@ document.addEventListener('click', (e) => {
 });
 
 // --- OVERRIDE RENDER FUNCTION FOR NEW LAYOUT ---
-// We monkey-patch DMManager's render function to use the new right/left CSS
 DMManager.prototype.renderMessageBubble = function(msg) {
     const div = document.createElement('div');
     // Use 'right' for me, 'left' for others
     div.className = `msg-wrapper ${msg.isMe ? 'right' : 'left'}`;
     
+    // Format Time
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // The message content now includes the timestamp inside the bubble
     div.innerHTML = `
         <div class="msg ${msg.isMe ? 'msg-me' : 'msg-other'}">
             ${msg.text}
-            <div style="font-size:10px; text-align:right; opacity:0.7; margin-top:2px;">
-                ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </div>
+            <span class="msg-time">${time}</span>
         </div>
     `;
     document.getElementById('chat-area').appendChild(div);
 };
+
 
 // --- REST OF APP LOGIC (Standard) ---
 let currentUser = "";
@@ -69,6 +88,7 @@ const handleIncoming = (raw) => {
         return;
     }
     if (raw === "AUTH_FAILED") { alert("Token Invalid"); location.reload(); return; }
+    
     if (!dmManager) return;
     if (raw.startsWith("USERS:")) dmManager.updateUserList(raw);
     if (raw.startsWith("DM:")) {
@@ -80,8 +100,8 @@ const handleIncoming = (raw) => {
 const client = new SocketClient(handleIncoming, (act) => UI.setStatus(act));
 
 const qr = new QRManager((t) => {
-    const ip = document.getElementById('inp-ip').value.trim();
-    if(!ip) { alert("IP Required"); return; }
+    const ip = DOM.ipInput.value.trim();
+    if (!ip) { alert("IP Required"); return; }
     placeholder.innerText = "Verifying...";
     client.connect(ip);
     setTimeout(() => client.send("AUTH:"+t), 500);
@@ -106,3 +126,5 @@ document.getElementById('form-chat').addEventListener('submit', (e) => {
         emojiPicker.classList.add('hidden'); // Close emoji on send
     }
 });
+
+document.getElementById('btn-logout').addEventListener('click', () => { client.disconnect(); location.reload(); });
