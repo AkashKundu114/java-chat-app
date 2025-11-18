@@ -2,77 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- THIS LINE FIXES THE GIANT SIZE ISSUE -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JavaChat Mobile</title>
+    <title>JavaChat WhatsApp</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div id="layer-login">
         <div class="login-card">
-            <h2 class="login-title">Secure Login</h2>
-            
-            <div id="debug-console" style="font-family:monospace; font-size:10px; color:#4ade80; background:#000; padding:5px; margin-bottom:10px; height:50px; overflow:auto;">
-                > Ready.
-            </div>
-
+            <h2 class="login-title">WhatsApp Login</h2>
+            <div id="debug-console" style="font-family:monospace; font-size:10px; color:#00a884; background:#111b21; padding:5px; margin-bottom:10px; height:40px; overflow:hidden;">> Waiting...</div>
             <input id="inp-ip" type="text" class="input-box" placeholder="Bridge IP">
-
             <div class="camera-frame">
                 <div id="qr-reader" style="width:100%; height:100%;"></div>
-                <div id="camera-placeholder" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#64748b;">
-                    Tap 'Scan' to start
-                </div>
+                <div id="camera-placeholder" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#8696a0;">Tap Scan</div>
             </div>
-
             <div class="btn-group">
-                <button id="btn-activate-cam" class="btn btn-primary">
-                    <i data-lucide="camera"></i> Scan
-                </button>
-                <button id="btn-upload-qr" class="btn btn-secondary">
-                    <i data-lucide="image"></i> Gallery
-                </button>
+                <button id="btn-activate-cam" class="btn btn-primary"><i data-lucide="camera"></i> Scan</button>
+                <button id="btn-upload-qr" class="btn btn-secondary"><i data-lucide="image"></i> Gallery</button>
             </div>
             <input type="file" id="inp-file-qr" accept="image/*" class="hidden">
         </div>
     </div>
 
-    <!-- APP SCREEN (Sidebar + Chat) -->
+    <!-- APP -->
     <div id="layer-app" class="hidden">
-        
-        <!-- LEFT SIDEBAR -->
         <aside id="sidebar-panel" class="sidebar">
             <div class="header">
-                <span style="font-weight:bold; font-size:1.2rem; color:white;">Contacts</span>
+                <span style="font-weight:bold; font-size:1.1rem; color:#e9edef;">Chats</span>
             </div>
             <div id="sidebar-list" class="contact-list">
-                <div style="text-align:center; color:#64748b; margin-top:20px;">Waiting for network...</div>
+                <div style="text-align:center; color:#8696a0; margin-top:20px;">Waiting for network...</div>
             </div>
         </aside>
 
-        <!-- RIGHT CHAT PANEL -->
         <main id="main-chat-panel" class="chat-panel hidden">
+            <!-- Header -->
             <div class="header">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button id="btn-back-contact" style="background:none; border:none; color:#cbd5e1; padding:5px;">
-                        <i data-lucide="chevron-left"></i>
-                    </button>
-                    <span id="chat-header-title" style="font-weight:bold; color:white;">Chat</span>
+                    <button id="btn-back-contact" class="btn-icon md:hidden"><i data-lucide="arrow-left"></i></button>
+                    <div class="avatar" id="chat-avatar" style="width:35px; height:35px; font-size:14px;">?</div>
+                    <span id="chat-header-title" style="font-weight:bold; color:#e9edef;">User</span>
                 </div>
-                <div id="connection-status" style="font-size:12px; color:#4ade80;">● Online</div>
+                <div id="connection-status" style="font-size:12px; color:#00a884;">●</div>
             </div>
 
+            <!-- Messages -->
             <div id="chat-area" class="chat-messages"></div>
 
+            <!-- Emoji Picker (Hidden by Default) -->
+            <div id="emoji-picker" class="hidden">
+                <!-- Emojis injected by JS -->
+            </div>
+
+            <!-- Input Bar -->
             <form id="form-chat" class="chat-input-area">
-                <input id="inp-message" type="text" class="input-box" style="margin:0; text-align:left;" placeholder="Message..." autocomplete="off">
-                <button type="submit" class="btn btn-primary" style="width:auto; padding:0 20px;">
-                    <i data-lucide="send"></i>
-                </button>
+                <button type="button" id="btn-emoji" class="btn-icon"><i data-lucide="smile"></i></button>
+                <input id="inp-message" type="text" class="input-box-chat" placeholder="Message" autocomplete="off">
+                <button type="submit" class="btn-send"><i data-lucide="send" style="width:18px;"></i></button>
             </form>
         </main>
     </div>

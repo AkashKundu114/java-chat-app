@@ -1,208 +1,97 @@
 /* =========================================
-   1. RESET & MOBILE DEFAULTS
+   1. RESET & DEFAULTS
    ========================================= */
-* {
-    box-sizing: border-box; /* CRITICAL: Fixes layout overflow */
-    -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: #020617; /* Slate 950 */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    overflow: hidden; /* Prevents scroll bouncing */
-    color: #f8fafc;
-}
-
-/* Utility to hide elements */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; width: 100%; margin: 0; background-color: #0b141a; /* WhatsApp Dark Bg */ font-family: Helvetica, Arial, sans-serif; overflow: hidden; color: #e9edef; }
 .hidden { display: none !important; }
 
 /* =========================================
    2. LOGIN SCREEN
    ========================================= */
-#layer-login {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 50;
-    background-color: #020617;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.login-card {
-    width: 100%;
-    max-width: 360px;
-    background: #1e293b; /* Slate 800 */
-    padding: 24px;
-    border-radius: 16px;
-    border: 1px solid #334155;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-
-.login-title {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: white;
-}
-
-/* Inputs - Font size 16px prevents iOS Zoom */
-.input-box {
-    width: 100%;
-    padding: 14px;
-    background: #0f172a;
-    border: 1px solid #475569;
-    border-radius: 12px;
-    color: white;
-    font-size: 16px; 
-    outline: none;
-    text-align: center;
-    margin-bottom: 15px;
-}
-.input-box:focus { border-color: #6366f1; }
-
-/* Camera Box */
-.camera-frame {
-    background: black;
-    height: 250px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    overflow: hidden;
-    position: relative;
-    border: 2px solid #334155;
-}
-
-/* Buttons */
-.btn-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.btn {
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.btn-primary { background: #4f46e5; color: white; }
-.btn-secondary { background: #334155; color: white; }
+#layer-login { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; background-color: #111b21; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.login-card { width: 100%; max-width: 360px; background: #202c33; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.login-title { text-align: center; font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; color: #e9edef; }
+.input-box { width: 100%; padding: 12px; background: #2a3942; border: none; border-radius: 8px; color: white; font-size: 16px; outline: none; text-align: center; margin-bottom: 15px; }
+.camera-frame { background: black; height: 250px; border-radius: 12px; margin-bottom: 15px; overflow: hidden; position: relative; border: 1px solid #374248; }
+.btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { padding: 12px; border: none; border-radius: 24px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-primary { background: #00a884; color: #111b21; } /* WhatsApp Green Button */
+.btn-secondary { background: #2a3942; color: #00a884; }
 
 /* =========================================
-   3. APP LAYOUT (FLEXBOX)
+   3. APP LAYOUT
    ========================================= */
-#layer-app {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    display: flex;
-    background: #020617;
+#layer-app { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; background: #0b141a; }
+
+/* Sidebar */
+.sidebar { display: flex; flex-direction: column; width: 100%; height: 100%; background: #111b21; z-index: 20; border-right: 1px solid #2a3942; }
+.header { height: 60px; padding: 10px 16px; background: #202c33; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.contact-list { flex: 1; overflow-y: auto; padding: 0; }
+.contact-item { padding: 12px 16px; display: flex; align-items: center; gap: 15px; cursor: pointer; border-bottom: 1px solid #202c33; }
+.contact-item:hover { background: #202c33; }
+.contact-item.active { background: #2a3942; }
+.avatar { width: 45px; height: 45px; border-radius: 50%; background: #6a7175; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 18px; }
+
+/* Chat Panel */
+.chat-panel { display: flex; flex-direction: column; width: 100%; height: 100%; background: #0b141a; z-index: 30; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat; background-size: 400px; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Message Bubbles */
+.msg-wrapper { display: flex; width: 100%; margin-bottom: 2px; }
+.msg-wrapper.right { justify-content: flex-end; }
+.msg-wrapper.left { justify-content: flex-start; }
+
+.msg { 
+    padding: 8px 12px; 
+    border-radius: 8px; 
+    max-width: 85%; 
+    font-size: 14.5px; 
+    line-height: 1.3; 
+    word-wrap: break-word; 
+    position: relative; 
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
 }
 
-/* SIDEBAR */
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    width: 100%; /* Mobile Default */
-    height: 100%;
-    background: #0f172a;
-    z-index: 20;
+/* SENDER (Right - Green) */
+.msg-me { 
+    background-color: #005c4b; /* WhatsApp Message Green */
+    color: #e9edef; 
+    border-top-right-radius: 0; 
 }
 
-.header {
-    height: 60px;
-    padding: 0 16px;
-    border-bottom: 1px solid #1e293b;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(15, 23, 42, 0.95);
-    flex-shrink: 0;
+/* RECEIVER (Left - Dark Grey) */
+.msg-other { 
+    background-color: #202c33; /* WhatsApp Message Grey */
+    color: #e9edef; 
+    border-top-left-radius: 0; 
 }
 
-.contact-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-}
+/* Input Area */
+.chat-input-area { padding: 8px 10px; background: #202c33; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.input-box-chat { flex: 1; padding: 10px 15px; background: #2a3942; border: none; border-radius: 8px; color: white; font-size: 15px; outline: none; }
 
-.contact-item {
-    padding: 12px;
-    background: #1e293b;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-}
-.contact-item.active { border: 1px solid #6366f1; }
+/* Emoji Button */
+.btn-icon { background: none; border: none; color: #8696a0; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-send { background: #00a884; color: #111b21; border: none; padding: 10px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
 
-/* CHAT PANEL */
-.chat-panel {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    background: #020617;
-    z-index: 30;
+/* Emoji Picker Layer */
+#emoji-picker {
+    position: absolute; bottom: 70px; left: 10px; 
+    background: #202c33; border: 1px solid #2a3942; border-radius: 8px;
+    padding: 10px; display: grid; grid-template-columns: repeat(6, 1fr); 
+    gap: 5px; width: 280px; height: 200px; overflow-y: auto;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
 }
+.emoji-btn { font-size: 20px; cursor: pointer; padding: 5px; text-align: center; border-radius: 4px; }
+.emoji-btn:hover { background: #2a3942; }
 
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.chat-input-area {
-    padding: 10px;
-    background: #0f172a;
-    border-top: 1px solid #1e293b;
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0; /* Prevents crushing when keyboard opens */
-}
-
-.msg {
-    padding: 10px 14px;
-    border-radius: 18px;
-    max-width: 80%;
-    font-size: 15px;
-    line-height: 1.4;
-    word-wrap: break-word;
-}
-.msg-me { background: #4f46e5; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-.msg-other { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; }
-
-/* =========================================
-   4. RESPONSIVE LOGIC
-   ========================================= */
+/* RESPONSIVE */
 @media (min-width: 768px) {
-    /* Desktop: Show both sidebar and chat */
-    .sidebar { width: 320px; border-right: 1px solid #334155; }
-    .chat-panel { flex: 1; display: flex !important; }
-    .sidebar { display: flex !important; }
-    #btn-back { display: none; }
+    .sidebar { width: 350px; border-right: 1px solid #2a3942; }
+    .chat-panel { display: flex !important; }
+    #btn-back-contact { display: none; }
 }
-
 @media (max-width: 767px) {
-    /* Mobile: Toggle Visibility */
     .sidebar.hidden { display: none; }
     .chat-panel.hidden { display: none; }
 }
