@@ -3,18 +3,18 @@
 export const UI = {
     toggleLogin: (showLogin) => {
         if (showLogin) {
-            DOM.loginLayer.classList.remove('hidden');
-            DOM.appLayer.classList.add('hidden');
+            if(DOM.loginLayer) DOM.loginLayer.classList.remove('hidden');
+            if(DOM.appLayer) DOM.appLayer.classList.add('hidden');
         } else {
-            DOM.loginLayer.classList.add('hidden');
-            DOM.appLayer.classList.remove('hidden');
+            if(DOM.loginLayer) DOM.loginLayer.classList.add('hidden');
+            if(DOM.appLayer) DOM.appLayer.classList.remove('hidden');
         }
     },
     
     setStatus: (isActive) => {
-        const html = isActive ? '<span class="text-green-500">● Online</span>' : '<span class="text-red-500">● Offline</span>';
-        if (DOM.statusText) DOM.statusText.innerHTML = html;
-        if (document.getElementById('connection-status')) document.getElementById('connection-status').innerHTML = html;
+        const html = isActive ? '<span style="color:#4ade80">● Online</span>' : '<span style="color:#f87171">● Offline</span>';
+        const el = document.getElementById('connection-status');
+        if(el) el.innerHTML = html;
     },
 
     scrollToBottom: () => {
