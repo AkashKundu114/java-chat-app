@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaChat AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .ai-scroll::-webkit-scrollbar { width: 4px; }
+        .ai-scroll::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans h-screen flex flex-col overflow-hidden">
+
+    <div id="layer-login" class="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6">
+        <div class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white text-center mb-2">Secure Login</h2>
+            <p class="text-center text-slate-400 text-sm mb-6">Scan your ID to enter</p>
+            
+            <div class="mb-4">
+                <input id="inp-ip" type="text" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-600 text-white font-mono text-center" placeholder="Bridge IP (e.g. 192.168.1.5)">
+            </div>
+
+            <div class="mb-4 bg-black rounded-xl overflow-hidden relative h-64 flex items-center justify-center border-2 border-indigo-500/30">
+                <div id="qr-reader" class="w-full h-full"></div>
+                <div id="camera-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">
+                    Camera Inactive
+                </div>
+            </div>
+
+            <button id="btn-activate-cam" class="w-full bg-indigo-600 hover:bg-indigo-500 p-4 rounded-xl font-bold text-white flex justify-center items-center gap-2 transition-all">
+                <i data-lucide="camera"></i> Activate Camera
+            </button>
+        </div>
+    </div>
+
+    <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center shrink-0 relative shadow-md z-10">
+        <h1 class="font-bold text-lg text-white flex items-center gap-2">
+            <i data-lucide="server" class="text-indigo-400"></i> Java<span class="text-indigo-400">Chat</span>
+        </h1>
+        <div class="flex items-center gap-3">
+            <div id="connection-status" class="text-xs text-green-500 font-mono">● Online</div>
+            <button id="btn-logout" class="text-slate-400 hover:text-white"><i data-lucide="log-out"></i></button>
+        </div>
+    </header>
+
+    <section class="bg-indigo-900/20 border-b border-indigo-500/30 p-3 shrink-0 backdrop-blur-sm z-0">
+        <div class="flex items-start gap-3">
+            <div class="bg-indigo-600 p-2 rounded-full mt-1 shadow-lg shadow-indigo-500/20">
+                <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wide">AI Assistant</h3>
+                </div>
+                
+                <div id="ai-messages" class="h-16 overflow-y-auto ai-scroll text-sm text-slate-300 mb-2 pr-2">
+                    <p class="italic text-slate-500">I'm here locally! Ask me anything.</p>
+                </div>
+
+                <form id="form-ai" class="flex gap-2">
+                    <input id="inp-ai" type="text" class="flex-1 bg-indigo-950/50 border border-indigo-500/30 rounded-lg px-3 py-1 text-sm text-white placeholder-indigo-400/30 focus:outline-none focus:border-indigo-400" placeholder="Talk to AI..." autocomplete="off">
+                    <button type="submit" class="text-indigo-400 hover:text-white"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950"></main>
+
+    <form id="form-chat" class="p-4 bg-slate-900 border-t border-slate-800 flex gap-3 shrink-0">
+        <input id="inp-message" type="text" class="flex-1 bg-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-500" placeholder="Message the group..." autocomplete="off">
+        <button type="submit" class="bg-slate-700 text-white p-3 rounded-xl hover:bg-indigo-600 transition-colors"><i data-lucide="send"></i></button>
+    </form>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

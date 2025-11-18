@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Token Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-slate-900 text-white flex flex-col items-center justify-center h-screen p-4">
+    
+    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl max-w-md w-full">
+        <h1 class="text-2xl font-bold mb-4 text-indigo-400 flex items-center gap-2">
+            <span>ID Generator</span>
+        </h1>
+        
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Paste Server Token</label>
+        <input id="tokenInput" type="text" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-white mb-4 font-mono focus:outline-none focus:border-indigo-500" placeholder="UUID from Java Console">
+        
+        <button onclick="generate()" class="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors p-3 rounded-lg font-bold mb-6">Generate QR Code</button>
+        
+        <div class="flex justify-center">
+            <div id="qrcode" class="bg-white p-4 rounded-xl"></div>
+        </div>
+    </div>
+
+    <script>
+        function generate() {
+            const t = document.getElementById('tokenInput').value.trim();
+            const c = document.getElementById('qrcode');
+            c.innerHTML = ""; 
+            if(t) {
+                new QRCode(c, { 
+                    text: t, 
+                    width: 200, 
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+        }
+    </script>
+</body>
+</html>

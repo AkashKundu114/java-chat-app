@@ -1,0 +1,11 @@
+﻿{
+  "name": "chat-bridge",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
