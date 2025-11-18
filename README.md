@@ -1,127 +1,89 @@
-Enterprise Chat Application 🚀
+# 🚀 Enterprise Chat Application  
+A full-stack, multi-threaded chat system built with **Java (TCP Sockets)**, **Node.js (WebSocket Bridge)**, and a **Responsive Web Client**.  
+Designed to demonstrate **concurrency**, **raw networking**, **offline message delivery**, and **QR-based secure authentication**.
 
-A fully functional, multi-threaded chat application featuring a Java Backend, Node.js Bridge, and a Responsive Web Client with QR Code authentication. Designed to demonstrate raw TCP socket handling, threading, and secure websocket tunneling.
+---
 
-🌟 Key Features
+## ⭐ Features
 
-Multi-Threaded Java Core: Uses the Thread Inheritance model to handle multiple concurrent users without blocking.
+### 🔹 Multi-Threaded Java Server  
+- Thread-inheritance model  
+- Handles many clients simultaneously  
+- Non-blocking message processing  
 
-Direct Messaging (DM): Supports private 1-on-1 messaging routed by the server.
+### 🔹 Private Direct Messaging (DM)  
+- Secure 1-on-1 messaging  
+- Server-side routing  
 
-Offline Message Storage: Saves messages for users who are offline and delivers them upon reconnection.
+### 🔹 Offline Message Queue  
+- Messages stored if the user is offline  
+- Delivered automatically once the user reconnects  
 
-Hybrid Architecture: Bridges raw TCP Java sockets to Modern WebSockets for browser compatibility.
+### 🔹 Hybrid Socket Architecture  
+- Java backend uses **raw TCP sockets**  
+- Node bridge converts **WebSockets ↔ TCP**  
+- Allows browsers to communicate with the Java server  
 
-Secure QR Login: Admin-generated tokens and QR scanning for secure, password-less entry.
+### 🔹 QR Code Login (Password-less)  
+- Admin generates secure login tokens  
+- Users scan QR from mobile to authenticate  
 
-Responsive UI: Mobile-first web interface styled with Tailwind CSS.
+### 🔹 Responsive Web UI  
+- Mobile-first  
+- Powered by **Tailwind CSS**  
+- DM sidebar, chat window, and admin console  
 
-📂 Architecture Overview
+---
 
-The project is divided into three distinct modules:
+## 🏛 Architecture Overview
 
-1_backend_java (The Brain):
+```
+┌─────────────────────────┐      ┌──────────────────────────┐      ┌──────────────────────────┐
+│   Java Backend (TCP)    │◄────►│  Node.js Bridge (WS/TCP) │◄────►│  Web Client (HTML + JS)  │
+│      "The Brain"        │      │      "The Translator"    │      │        "The Face"         │
+└─────────────────────────┘      └──────────────────────────┘      └──────────────────────────┘
+         Port 12345                        Port 8080                    Ngrok / Localhost
+```
 
-Manages client connections, threading, message routing, and storage.
+### **1. backend_java**
+- Manages threads  
+- Stores & routes messages  
+- Handles user registration and token generation  
 
-Runs on Port 12345.
+### **2. bridge_node**
+- WebSocket server  
+- Forwards browser packets to Java via raw TCP  
+- Bridges modern web to traditional socket systems  
 
-2_bridge_node (The Translator):
+### **3. client_web**
+- HTML + JavaScript frontend  
+- QR login  
+- Chat interface  
+- Admin token generator  
 
-Converts Browser WebSockets (ws://) to Raw TCP Sockets.
+---
 
-Runs on Port 8080.
+## 🛠 Prerequisites
 
-3_client_web (The Face):
+- **Java JDK 17+**  
+- **Node.js (LTS)**  
+- **Git**  
+- Optional: **Ngrok** for public access  
 
-A pure HTML/JS frontend that users interact with.
+---
 
-Connects via Ngrok or Localhost.
+## 🚀 Quick Start
 
-🛠 Prerequisites
-
-Java JDK 17+
-
-Node.js (LTS Version)
-
-Git
-
-🚀 Quick Start Guide
-
-1. Clone the Repository
-
-git clone [https://github.com/AkashKundu114/java-chat-app.git](https://github.com/AkashKundu114/java-chat-app.git)
+### ⬇️ Clone Repository
+```bash
+git clone https://github.com/AkashKundu114/java-chat-app.git
 cd java-chat-app
+```
 
+---
 
-2. Start the Java Backend (Terminal 1)
-
-This handles the core logic.
-
+## 1️⃣ Start Java Backend (Terminal 1)
+```bash
 cd 1_backend_java
 mkdir -p bin
-# Compile
-javac -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java
-# Run
-java -cp bin com.chat.Main
-
-
-While here, create a user by typing: register Akash (Copy the generated Token!)
-
-3. Start the Bridge (Terminal 2)
-
-This allows the web browser to talk to Java.
-
-cd 2_bridge_node
-npm install
-npm start
-
-
-4. Expose to Internet (Terminal 3 - Optional)
-
-Use Ngrok to allow phones to connect securely.
-
-ngrok http 8080
-
-
-Copy the Forwarding URL (e.g., https://xyz.ngrok-free.app).
-
-5. Launch the App
-
-Host: Drag the 3_client_web folder to Netlify Drop or serve locally (python -m http.server 8000).
-
-Connect: Open the site on your phone.
-
-Configure: Enter the Ngrok URL in the "Bridge IP" box.
-
-Login: Open 3_client_web/admin.html on PC, paste your token, generate QR, and scan with phone.
-
-📸 Screenshots
-
-Login Screen
-
-Chat Interface
-
-Admin Console
-
-Scan QR to Enter
-
-Private DMs & Sidebar
-
-Token Generation
-
-🤝 Contributing
-
-Fork the Project
-
-Create your Feature Branch (git checkout -b feature/AmazingFeature)
-
-Commit your Changes (git commit -m 'Add some AmazingFeature')
-
-Push to the Branch (git push origin feature/AmazingFeature)
-
-Open a Pull Request
-
-📝 License
-
-Distributed under the MIT License. See LICENSE for more information.
+```
