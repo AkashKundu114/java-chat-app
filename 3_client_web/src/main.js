@@ -12,13 +12,13 @@ lucide.createIcons();
 // --- Initialization Logic ---
 const inpMsg = document.getElementById('inp-message');
 
-// FIX: Automatically fill the IP field on load
+// FIX: Automatically fill the hidden IP field on load
 document.addEventListener('DOMContentLoaded', () => {
     const ipInput = document.getElementById('inp-ip');
+    
+    // CRITICAL: Inject the default IP/Tunnel URL into the hidden field
     if (ipInput && SETTINGS.DEFAULT_IP) {
         ipInput.value = SETTINGS.DEFAULT_IP;
-        // Also update the placeholder text if you want
-        ipInput.placeholder = SETTINGS.DEFAULT_IP; 
     }
 });
 // ----------------------------
@@ -100,14 +100,22 @@ const handleIncoming = (raw) => {
 const client = new SocketClient(handleIncoming, (act) => UI.setStatus(act));
 
 const qr = new QRManager((t) => {
-    const ip = DOM.ipInput.value.trim();
-    if (!ip) { alert("IP Required"); return; }
+    // The IP value is now read from the hidden input field
+    const ip = DOM.ipInput.value.trim(); 
+    if (!ip) { alert("Error: Tunnel IP not set. Check settings.js."); return; }
+    
     placeholder.innerText = "Verifying...";
     client.connect(ip);
     setTimeout(() => client.send("AUTH:"+t), 500);
 });
 
 document.getElementById('btn-activate-cam').addEventListener('click', () => {
+    // If the input is empty, alert user before starting the camera
+    if (!document.getElementById('inp-ip').value.trim()) {
+        alert("Error: Tunnel Address not found. Please check settings.js and push code.");
+        return;
+    }
+    
     placeholder.style.display = 'none';
     qr.startScanner("qr-reader");
 });
