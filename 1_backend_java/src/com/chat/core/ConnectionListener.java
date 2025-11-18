@@ -1,4 +1,4 @@
-﻿package com.chat.core;
+package com.chat.core;
 
 import com.chat.config.ServerConfig;
 import com.chat.threads.ClientWorker;
