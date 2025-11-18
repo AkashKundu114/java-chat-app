@@ -1,45 +1,66 @@
-/* --- GLOBAL RESET & SCROLLBAR --- */
+/* =========================================
+   1. GLOBAL RESET & BASICS
+   ========================================= */
 body {
     background-color: #020617; /* slate-950 */
     color: #f1f5f9; /* slate-100 */
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     height: 100vh;
+    width: 100vw;
     overflow: hidden;
     margin: 0;
+    padding: 0;
 }
 
-/* Custom Scrollbar (Webkit) */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+/* Utility to hide elements (Logic uses this to switch screens) */
+.hidden {
+    display: none !important;
 }
 
-/* --- COMPONENTS --- */
+/* Custom Scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* 1. Login Layer */
+/* =========================================
+   2. LOGIN SCREEN COMPONENTS
+   ========================================= */
+#layer-login {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #0f172a; /* slate-900 */
+    padding: 1.5rem;
+}
+
 .login-container {
     width: 100%;
-    max-width: 28rem; /* max-w-md */
+    max-width: 400px;
     background-color: #1e293b; /* slate-800 */
     border: 1px solid #334155; /* slate-700 */
-    border-radius: 1rem; /* rounded-2xl */
-    padding: 1.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .input-field {
     width: 100%;
     padding: 0.75rem;
-    background-color: #0f172a; /* slate-900 */
+    background-color: #020617; /* slate-950 */
     border: 1px solid #475569; /* slate-600 */
-    border-radius: 0.75rem; /* rounded-xl */
+    border-radius: 0.75rem;
     color: white;
     text-align: center;
     font-family: monospace;
     outline: none;
+    box-sizing: border-box; /* Prevents padding from adding width */
+}
+
+.input-field:focus {
+    border-color: #6366f1; /* indigo-500 */
 }
 
 .btn-primary {
@@ -48,17 +69,16 @@ body {
     padding: 0.75rem;
     border-radius: 0.75rem;
     font-weight: bold;
+    width: 100%;
+    border: none;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.2s;
-    border: none;
-    cursor: pointer;
+    transition: background 0.2s;
 }
-.btn-primary:hover {
-    background-color: #4338ca; /* indigo-700 */
-}
+.btn-primary:hover { background-color: #4338ca; }
 
 .btn-secondary {
     background-color: #334155; /* slate-700 */
@@ -66,50 +86,70 @@ body {
     padding: 0.75rem;
     border-radius: 0.75rem;
     font-weight: bold;
+    width: 100%;
+    border: none;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.2s;
-    border: none;
-    cursor: pointer;
+    transition: background 0.2s;
 }
-.btn-secondary:hover {
-    background-color: #475569; /* slate-600 */
+.btn-secondary:hover { background-color: #475569; }
+
+/* =========================================
+   3. APP LAYOUT (Sidebar + Chat)
+   ========================================= */
+#layer-app {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #020617;
 }
 
-/* 2. Sidebar (Contacts) */
+/* Sidebar (Contacts) */
 .sidebar {
     background-color: #0f172a; /* slate-900 */
     border-right: 1px solid #1e293b; /* slate-800 */
     display: flex;
     flex-direction: column;
-    z-index: 10;
     height: 100%;
+    z-index: 10;
+    width: 100%; /* Default mobile width */
 }
 
+/* Chat Panel */
+.chat-panel {
+    background-color: #020617; /* slate-950 */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    position: relative;
+    z-index: 5;
+}
+
+/* Contact Items in Sidebar */
 .contact-item {
     padding: 1rem;
-    border-radius: 0.75rem; /* rounded-xl */
-    margin-bottom: 0.25rem;
+    border-bottom: 1px solid #1e293b;
     cursor: pointer;
-    transition: background-color 0.2s;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.2s;
 }
-.contact-item:hover {
-    background-color: rgba(30, 41, 59, 0.5); /* slate-800/50 */
-}
+.contact-item:hover { background-color: #1e293b; }
 .contact-item.active {
-    background-color: rgba(79, 70, 229, 0.2); /* indigo-600/20 */
-    border: 1px solid rgba(99, 102, 241, 0.5); /* indigo-500/50 */
+    background-color: rgba(79, 70, 229, 0.1);
+    border-left: 4px solid #4f46e5;
 }
 
 .avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,49 +157,73 @@ body {
     color: white;
 }
 
-/* 3. Chat Area */
-.chat-panel {
-    background-color: #020617; /* slate-950 */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    position: relative;
-    z-index: 20;
-}
-
+/* Headers */
 .glass-header {
-    padding: 0.75rem;
-    border-bottom: 1px solid #1e293b; /* slate-800 */
-    background-color: rgba(15, 23, 42, 0.9); /* slate-900/90 */
-    backdrop-filter: blur(4px);
+    padding: 1rem;
+    border-bottom: 1px solid #1e293b;
+    background-color: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 60px;
 }
 
+/* =========================================
+   4. CHAT BUBBLES
+   ========================================= */
 .msg-bubble {
-    max-width: 80%;
-    padding: 0.5rem 1rem;
-    border-radius: 1rem;
-    font-size: 0.875rem;
+    max-width: 75%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 14px;
+    line-height: 1.4;
     word-wrap: break-word;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .msg-me {
     background-color: #4f46e5; /* indigo-600 */
     color: white;
-    border-bottom-right-radius: 0;
+    border-bottom-right-radius: 2px;
+    margin-left: auto; /* Pushes to right */
 }
 
 .msg-other {
     background-color: #1e293b; /* slate-800 */
-    color: #e2e8f0; /* slate-200 */
-    border-bottom-left-radius: 0;
-    border: 1px solid #334155; /* slate-700 */
+    color: #e2e8f0;
+    border-bottom-left-radius: 2px;
+    border: 1px solid #334155;
+    margin-right: auto; /* Pushes to left */
 }
 
-/* 4. Utilities */
-.hidden { display: none !important; }
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.absolute-full { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+/* =========================================
+   5. RESPONSIVE BREAKPOINTS (Desktop vs Mobile)
+   ========================================= */
+@media (min-width: 768px) {
+    /* Desktop: Sidebar fixed width, Chat takes rest */
+    .sidebar {
+        width: 320px !important;
+        position: relative !important;
+    }
+    
+    .chat-panel {
+        display: flex !important; /* Always show chat on desktop */
+    }
+    
+    /* Hide elements meant for mobile only */
+    #btn-back-contact {
+        display: none !important;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Mobile: Sidebar hides when chat is active, handled by JS toggling .hidden class */
+    .sidebar.hidden {
+        display: none !important;
+    }
+    
+    .chat-panel.hidden {
+        display: none !important;
+    }
+}

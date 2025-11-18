@@ -4,61 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JavaChat DM</title>
+    
+    <!-- Link to the Separate CSS File -->
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons and QR Library -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <div id="layer-login" class="absolute-full z-50 flex flex-col items-center justify-center p-6 bg-slate-900">
+    <!-- LOGIN LAYER -->
+    <div id="layer-login">
         <div class="login-container">
-            <h2 class="text-2xl font-bold text-white text-center mb-6">Secure Login</h2>
-            <div class="mb-4">
-                <input id="inp-ip" type="text" class="input-field" placeholder="Bridge IP">
+            <h2 style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 1.5rem; color: white;">Secure Login</h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <input id="inp-ip" type="text" class="input-field" placeholder="Bridge IP (e.g. 192.168.1.5)">
             </div>
-            <div class="mb-4 bg-black h-64 rounded-xl flex items-center justify-center border-2 border-indigo-500/30 overflow-hidden relative">
-                <div id="qr-reader" class="w-full h-full"></div>
-                <div id="camera-placeholder" class="absolute-full flex items-center justify-center text-slate-500 flex-col gap-2">
-                    <i data-lucide="scan" class="w-8 h-8 opacity-50"></i>
+
+            <!-- Camera Area -->
+            <div style="margin-bottom: 1rem; background: #000; height: 250px; border-radius: 1rem; position: relative; overflow: hidden; border: 2px solid #334155;">
+                <div id="qr-reader" style="width:100%; height:100%;"></div>
+                <div id="camera-placeholder" style="position: absolute; top:0; left:0; width:100%; height:100%; display: flex; align-items: center; justify-content: center; color: #64748b; flex-direction: column;">
+                    <i data-lucide="scan" style="width: 32px; height: 32px; opacity: 0.5; margin-bottom: 5px;"></i>
                     <span>Camera Inactive</span>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-activate-cam" class="btn-primary"><i data-lucide="camera" class="w-5 h-5"></i> Scan</button>
-                <button id="btn-upload-qr" class="btn-secondary"><i data-lucide="image" class="w-5 h-5"></i> Gallery</button>
+
+            <!-- Actions -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button id="btn-activate-cam" class="btn-primary">
+                    <i data-lucide="camera" style="width:20px;"></i> Scan
+                </button>
+                
+                <button id="btn-upload-qr" class="btn-secondary">
+                    <i data-lucide="image" style="width:20px;"></i> Gallery
+                </button>
             </div>
+            
             <input type="file" id="inp-file-qr" accept="image/*" class="hidden">
         </div>
     </div>
 
-    <div id="layer-app" class="flex h-full w-full relative hidden">
-        <aside id="sidebar-panel" class="sidebar w-full md:w-80 absolute md:relative">
-            <div class="p-4 border-b border-slate-800 glass-header">
-                <h1 class="font-bold text-lg flex items-center gap-2 text-white">Contacts</h1>
+    <!-- APP LAYER (Hidden by default via CSS class .hidden) -->
+    <div id="layer-app" class="hidden">
+        
+        <!-- SIDEBAR -->
+        <aside id="sidebar-panel" class="sidebar">
+            <div class="glass-header">
+                <h1 style="font-size: 1.125rem; font-weight: bold; display: flex; align-items: center; gap: 10px; color: white;">
+                    <i data-lucide="users" style="color: #6366f1;"></i> Contacts
+                </h1>
             </div>
-            <div id="sidebar-list" class="flex-1 overflow-y-auto p-2">
-                <div class="text-center text-slate-500 text-sm mt-10">Waiting for network...</div>
+            <div id="sidebar-list" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                <div style="text-align: center; color: #64748b; font-size: 0.875rem; margin-top: 2.5rem;">
+                    Waiting for network...
+                </div>
             </div>
         </aside>
-        <main id="main-chat-panel" class="chat-panel w-full md:flex-1 hidden md:flex">
-            <header class="glass-header flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-3">
-                    <button id="btn-back-contact" class="md:hidden p-2 text-slate-400"><i data-lucide="chevron-left"></i></button>
+
+        <!-- CHAT AREA -->
+        <main id="main-chat-panel" class="chat-panel hidden">
+            
+            <!-- Chat Header -->
+            <header class="glass-header">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="btn-back-contact" style="background: none; border: none; color: #94a3b8; cursor: pointer;">
+                        <i data-lucide="chevron-left" style="width: 24px; height: 24px;"></i>
+                    </button>
+                    
                     <div>
-                        <h2 id="chat-header-title" class="font-bold text-slate-100">Select Contact</h2>
-                        <div id="connection-status" class="text-xs text-green-500">● Online</div>
+                        <h2 id="chat-header-title" style="font-weight: bold; font-size: 1rem; color: #f1f5f9;">Select a contact</h2>
+                        <div id="connection-status" style="font-size: 0.75rem; color: #22c55e;">● Online</div>
                     </div>
                 </div>
             </header>
-            <div id="chat-area" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar"></div>
-            <form id="form-chat" class="p-3 bg-slate-900 border-t border-slate-800 flex gap-2 shrink-0">
-                <input id="inp-message" type="text" class="input-field text-left pl-4" placeholder="Type a message..." autocomplete="off">
-                <button type="submit" class="btn-primary rounded-xl px-3"><i data-lucide="send" class="w-5 h-5"></i></button>
+
+            <!-- Messages -->
+            <div id="chat-area" class="no-scrollbar" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- Messages will appear here -->
+            </div>
+
+            <!-- Input -->
+            <form id="form-chat" style="padding: 0.75rem; background-color: #0f172a; border-top: 1px solid #1e293b; display: flex; gap: 0.5rem;">
+                <input id="inp-message" type="text" class="input-field" style="margin-bottom: 0; text-align: left;" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="btn-primary" style="width: auto; padding: 0 1.5rem;">
+                    <i data-lucide="send" style="width: 20px;"></i>
+                </button>
             </form>
         </main>
     </div>
 
+    <!-- Logic Scripts -->
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
