@@ -45,6 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSubmitAuth.addEventListener('click', handleAuthSubmit);
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
+    // Logout listener
+    const logoutBtn = document.getElementById('logout-icon-small');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            client.disconnect();
+            location.reload(); // Simple way to reset state
+        });
+    }
+
     // Set initial UI state
     toggleAuthMode(false); // Set to LOGIN by default
 });
@@ -107,10 +116,11 @@ const handleIncoming = (raw) => {
         currentUser = raw.split(":")[1];
         debug(`Login Success as ${currentUser}. Switching UI.`);
         
-        // --- CRITICAL FIX: Ensure App Layer is Displayed and Profile is set ---
+        // CRITICAL FIX: Ensure App Layer is Displayed correctly
         document.getElementById('layer-login').style.display = 'none';
         document.getElementById('layer-app').style.display = 'grid'; // Use grid for desktop
         
+        // Set Profile Info
         document.getElementById('my-profile-username').innerText = currentUser;
         document.getElementById('my-profile-avatar').innerText = currentUser.charAt(0).toUpperCase();
 
@@ -157,26 +167,46 @@ DMManager.prototype.renderMessageBubble = function(msg) {
     wrapper.innerHTML = `
         <div class="msg ${isMe ? 'msg-me' : 'msg-other'}">
             ${msg.text}
-            <span class="msg-time" style="color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)'};">${time}</span>
+            <span class="msg-time">${time}</span>
         </div>
     `;
     document.getElementById('chat-area').appendChild(wrapper);
 };
 
-DMManager.prototype.openChat = function(username) {
-    this.activeChatUser = username;
-    document.getElementById('chat-header-name').innerText = username;
-    document.getElementById('chat-area').innerHTML = ""; 
-    
-    // Toggle view for mobile devices
-    if (window.innerWidth < 768) {
-        document.getElementById('sidebar-panel').classList.add('hidden');
-        document.getElementById('main-chat-panel').classList.remove('hidden');
-    }
+DMManager.prototype.renderSidebar = function() {
+    // Overriding renderSidebar to include the new UI class structure
+    const sidebarList = document.getElementById('sidebar-list');
+    if (!sidebarList) return;
 
-    this.renderSidebar(); 
-    this.onSendMessage(`HISTORY:${username}`);
+    sidebarList.innerHTML = "";
+    this.users.forEach(u => {
+        if (u.name === this.currentUser) return; 
+
+        const div = document.createElement('div');
+        const isActive = this.activeChatUser === u.name;
+        
+        div.className = `contact-item ${isActive ? 'active' : ''}`;
+        div.innerHTML = `
+            <div style="display: flex; align-items: center; min-width: 0;">
+                <div class="avatar-small">${u.name.charAt(0).toUpperCase()}</div>
+                <div class="contact-info">
+                    <span class="contact-name">${u.name}</span>
+                    <span class="last-message">${u.status}</span>
+                </div>
+            </div>
+            <!-- Optional Status Dot -->
+            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${u.status === 'Online' ? '#4CAF50' : '#B0BEC5'};"></div>
+        `;
+        
+        div.onclick = () => {
+            this.openChat(u.name);
+            lucide.createIcons();
+        };
+        sidebarList.appendChild(div);
+    });
+    lucide.createIcons();
 };
+
 
 // --- EMOJI & INPUT LOGIC ---
 const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
