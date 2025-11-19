@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JavaChat Pro</title>
+    <title>JavaChat Retro</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -14,7 +14,7 @@
         <div class="login-card">
             <h2 class="login-title" id="login-title">SECURE LOGIN</h2>
             
-            <div id="debug-console" style="font-family:monospace; font-size:10px; color:var(--accent-dark); background:var(--bg-light); padding:5px; margin-bottom:10px; height:40px; overflow:hidden; border:1px solid var(--border-soft);">> System Ready.</div>
+            <div id="debug-console" style="font-family:monospace; font-size:10px; color:var(--accent-primary); background:var(--bg-dark); padding:5px; margin-bottom:10px; height:40px; overflow:hidden; border:2px solid var(--border-strong);">> READY</div>
             
             <!-- Hidden Input for Tunnel Address -->
             <input id="inp-ip" type="text" class="input-box hidden" value="" aria-hidden="true" readonly>
@@ -24,7 +24,7 @@
             <input id="inp-password" type="password" class="input-box" placeholder="Password">
 
             <!-- Primary Login/Register Button -->
-            <button id="btn-submit-auth" class="btn btn-primary" style="margin-bottom: 15px;">
+            <button id="btn-submit-auth" class="btn btn-primary" style="margin-bottom: 12px;">
                 <i data-lucide="log-in" style="width:20px;"></i> LOGIN
             </button>
             
@@ -41,9 +41,7 @@
         <!-- 1. NAVIGATION PANEL (Leftmost column) -->
         <aside class="nav-panel">
             <div class="nav-top">
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <span class="company-header">JOHNNY WALKER CO.</span>
-                </div>
+                <span class="company-header">JOHNNY WALKER CO.</span>
                 <div class="nav-icons">
                     <div class="nav-icon active"><i data-lucide="message-square"></i></div>
                 </div>
@@ -76,7 +74,7 @@
                     <div class="avatar-small" id="chat-header-avatar">?</div>
                     <div>
                         <span class="chat-header-name" id="chat-header-name">Select Contact</span>
-                        <span class="chat-header-status" id="chat-header-status">Offline</span>
+                        <span class="chat-header-status" id="chat-header-status">OFFLINE</span>
                     </div>
                 </div>
                 <div class="chat-header-actions">
@@ -88,8 +86,8 @@
 
             <div id="chat-area" class="chat-messages no-scrollbar">
                 <div class="welcome-message">
-                    <h3>Welcome!</h3>
-                    <p>Select a contact from the panel to start chatting.</p>
+                    <h3>WELCOME TO TERMINAL CHAT</h3>
+                    <p>SYSTEM INITIATED. WAITING FOR USER INPUT...</p>
                 </div>
             </div>
 
@@ -97,7 +95,7 @@
             <form id="form-chat" class="chat-input-container">
                 <button type="button" class="input-action-btn"><i data-lucide="paperclip"></i></button>
                 
-                <input id="inp-message" type="text" placeholder="Type your message..." class="message-input">
+                <input id="inp-message" type="text" placeholder="ENTER COMMAND..." class="message-input">
                 
                 <button type="button" id="btn-emoji" class="input-action-btn"><i data-lucide="smile"></i></button>
                 <button type="submit" class="input-action-btn send-btn"><i data-lucide="send"></i></button>
