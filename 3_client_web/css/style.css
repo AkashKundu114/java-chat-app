@@ -12,6 +12,8 @@
     --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06); /* Soft Shadow for Depth */
     --chat-bubble-me: #E8F0F9; /* Lightest blue-grey for user's message */
     --chat-bubble-other: #FFFFFF; /* White for contact's message */
+    --online-green: #4CAF50;
+    --error-red: #F44336;
 }
 
 body {
@@ -28,7 +30,6 @@ body {
 .hidden { display: none !important; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
 
 /* --- LOGIN/REGISTER LAYOUT --- */
 #layer-login {
@@ -52,6 +53,7 @@ body {
     border: 1px solid var(--border-soft);
     border-radius: 10px;
     font-size: 1rem; color: var(--text-primary); background-color: var(--bg-light);
+    box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 .input-box:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); }
@@ -70,10 +72,7 @@ body {
 
 /* --- MAIN APP LAYOUT --- */
 .app-container {
-    /* Set display to flex initially to ensure JS can toggle it */
-    display: none; 
-    
-    /* Desktop layout: Nav(80px) | Contacts(300px) | Chat(1fr) */
+    display: grid;
     grid-template-columns: 80px 300px 1fr; 
     width: 100%;
     max-width: 1300px;
@@ -83,7 +82,7 @@ body {
     border-radius: 20px;
     overflow: hidden;
     box-shadow: var(--shadow-soft);
-    position: absolute; /* Used for mobile stacking */
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -110,8 +109,6 @@ body {
     color: white; font-weight: 600; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
     margin-bottom: 10px;
 }
-.profile-username { font-size: 0.9rem; color: var(--text-color-dark); font-weight: 500; text-align: center; }
-
 .nav-icons { display: flex; flex-direction: column; gap: 15px; }
 .nav-icon {
     width: 40px; height: 40px; border-radius: 50%; background: transparent;
@@ -120,7 +117,6 @@ body {
 }
 .nav-icon.active { background: var(--accent-blue); color: white; box-shadow: 0 2px 5px rgba(74, 144, 226, 0.4); }
 .nav-icon:not(.active):hover { color: var(--accent-blue); background-color: #E8F0F9; }
-.nav-icon.logout { margin-top: 10px; }
 
 
 /* 2. Contact Panel (Middle Column) */
@@ -149,7 +145,7 @@ body {
 .contact-item.active { background-color: #E8F0F9; }
 
 .avatar-small {
-    width: 40px; height: 40px; border-radius: 50%; background: #B0BEC5; /* Light Grey Blue */
+    width: 40px; height: 40px; border-radius: 50%; background: #B0BEC5; 
     color: var(--accent-dark); font-weight: 500; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; margin-right: 12px;
 }
@@ -160,7 +156,6 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    /* Background for chat area */
     background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23f1f1f1' fill-opacity='0.4'%3E%3Cpath d='M3 0L0 3v1h4.5v-1L3 0zm0 6l3-3v-1H1.5v1L3 6z'/%3E%3C/g%3E%3C/svg%3E");
 }
 .chat-header {
@@ -226,9 +221,21 @@ body {
     margin: 0 10px;
     font-size: 1rem;
     background-color: var(--bg-light);
+    color: var(--text-primary);
 }
 
-/* --- RESPONSIVENESS (Mobile/Tablet) --- */
+.input-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.1s;
+}
+.input-action-btn:hover { color: var(--accent-blue); }
+
+/* --- RESPONSIVENESS --- */
 @media (min-width: 768px) {
     /* Desktop: Use the three-column grid layout */
     .app-container {

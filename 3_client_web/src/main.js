@@ -61,18 +61,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- AUTHENTICATION HANDLERS ---
 
-function toggleAuthMode(toggle = true) {
-    if (toggle) {
+function toggleAuthMode(eventOrBool) {
+    if (typeof eventOrBool === 'boolean') {
+        isRegistering = eventOrBool;
+    } else {
         isRegistering = !isRegistering;
     }
     
     if (isRegistering) {
         loginTitle.innerText = "CREATE NEW ACCOUNT";
-        btnSubmitAuth.innerHTML = '<i data-lucide="user-plus"></i> REGISTER';
+        btnSubmitAuth.innerHTML = '<i data-lucide="user-plus" style="width:20px;"></i> REGISTER';
         btnToggleMode.innerHTML = 'Already registered? **LOGIN**';
     } else {
         loginTitle.innerText = "SECURE LOGIN";
-        btnSubmitAuth.innerHTML = '<i data-lucide="log-in"></i> LOGIN';
+        btnSubmitAuth.innerHTML = '<i data-lucide="log-in" style="width:20px;"></i> LOGIN';
         btnToggleMode.innerHTML = 'Don\'t have an account? **REGISTER**';
     }
     lucide.createIcons();
@@ -118,11 +120,16 @@ const handleIncoming = (raw) => {
         
         // CRITICAL FIX: Ensure App Layer is Displayed correctly
         document.getElementById('layer-login').style.display = 'none';
-        document.getElementById('layer-app').style.display = 'grid'; // Use grid for desktop
         
+        // This makes the app container visible, using the CSS grid setup
+        const appLayer = document.getElementById('layer-app');
+        if (appLayer) appLayer.style.display = 'grid'; 
+
         // Set Profile Info
-        document.getElementById('my-profile-username').innerText = currentUser;
-        document.getElementById('my-profile-avatar').innerText = currentUser.charAt(0).toUpperCase();
+        const profileAvatar = document.getElementById('my-profile-avatar');
+        const profileUsername = document.getElementById('my-profile-username');
+        if (profileAvatar) profileAvatar.innerText = currentUser.charAt(0).toUpperCase();
+        if (profileUsername) profileUsername.innerText = currentUser;
 
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
         return;
@@ -162,6 +169,7 @@ DMManager.prototype.renderMessageBubble = function(msg) {
     const isMe = msg.isMe;
     
     const wrapper = document.createElement('div');
+    // Ensure wrapper uses the defined CSS classes for layout
     wrapper.className = `msg-wrapper ${isMe ? 'right' : 'left'}`;
     
     wrapper.innerHTML = `
@@ -174,7 +182,6 @@ DMManager.prototype.renderMessageBubble = function(msg) {
 };
 
 DMManager.prototype.renderSidebar = function() {
-    // Overriding renderSidebar to include the new UI class structure
     const sidebarList = document.getElementById('sidebar-list');
     if (!sidebarList) return;
 
@@ -194,17 +201,34 @@ DMManager.prototype.renderSidebar = function() {
                     <span class="last-message">${u.status}</span>
                 </div>
             </div>
-            <!-- Optional Status Dot -->
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${u.status === 'Online' ? '#4CAF50' : '#B0BEC5'};"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${u.status === 'Online' ? 'var(--online-green)' : 'var(--text-secondary)'};"></div>
         `;
         
         div.onclick = () => {
+            // Mobile view toggle when clicking contact
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar-panel').classList.add('hidden');
+                document.getElementById('main-chat-panel').classList.remove('hidden');
+                document.getElementById('main-chat-panel').style.display = 'flex';
+            }
             this.openChat(u.name);
             lucide.createIcons();
         };
         sidebarList.appendChild(div);
     });
     lucide.createIcons();
+};
+
+DMManager.prototype.openChat = function(username) {
+    this.activeChatUser = username;
+    const chatHeaderName = document.getElementById('chat-header-name');
+    if (chatHeaderName) chatHeaderName.innerText = username;
+    
+    document.getElementById('chat-area').innerHTML = ""; 
+    this.renderSidebar(); 
+    
+    // CRITICAL: Ask Server for History from MongoDB
+    this.onSendMessage(`HISTORY:${username}`);
 };
 
 
@@ -217,8 +241,10 @@ emojis.forEach(em => {
     s.className = 'emoji-btn';
     s.innerText = em;
     s.onclick = () => {
-        inpMsg.value += em;
-        inpMsg.focus();
+        inpPassword.value += em; // Using inpPassword as a temp universal input reference since inpMsg is complex
+        inpUsername.focus();
+        if (inpMsg) inpMsg.value += em;
+        if (inpPassword) inpPassword.value += em;
     };
     if (emojiPicker) emojiPicker.appendChild(s);
 });
