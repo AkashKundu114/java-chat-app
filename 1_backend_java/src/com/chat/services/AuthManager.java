@@ -1,21 +1,13 @@
 package com.chat.services;
 
-import com.chat.utils.Logger;
-
 public class AuthManager {
     
-    // Registers a PERMANENT user in MongoDB
+    // Registers a PERMANENT user in MongoDB (calls DB manager which handles hashing)
     public static boolean registerPermanentUser(String username, String password) {
-        boolean success = DatabaseManager.createUser(username, password);
-        if (success) {
-            Logger.info("DB: Created User " + username);
-        } else {
-            Logger.error("DB: User " + username + " already exists!");
-        }
-        return success;
+        return DatabaseManager.createUser(username, password);
     }
 
-    // Verifies credentials from the QR code (LOGIN:user:pass)
+    // Verifies credentials from the login screen (calls DB manager which handles verification)
     public static boolean verifyLogin(String username, String password) {
         return DatabaseManager.verifyUser(username, password);
     }

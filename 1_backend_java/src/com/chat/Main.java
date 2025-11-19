@@ -18,20 +18,18 @@ public class Main {
             
             new Thread(() -> new ConnectionListener().start()).start();
 
-            try (Scanner sc = new Scanner(System.in)) {
-                System.out.println("ADMIN CMD: create <user> <pass> (For quick manual creation)");
-                
-                while (true) {
-                    if (!sc.hasNextLine()) break;
-                    String cmd = sc.nextLine();
-                    if (cmd.startsWith("create ")) {
-                        String[] p = cmd.split(" ");
-                        if (p.length == 3) {
-                            if (AuthManager.registerPermanentUser(p[1], p[2])) {
-                                Logger.info("ADMIN: Manually created user " + p[1]);
-                            } else {
-                                Logger.error("ADMIN: User " + p[1] + " already exists.");
-                            }
+            Scanner sc = new Scanner(System.in);
+            System.out.println("ADMIN CMD: create <user> <pass> (For quick manual creation)");
+            
+            while (true) {
+                String cmd = sc.nextLine();
+                if (cmd.startsWith("create ")) {
+                    String[] p = cmd.split(" ");
+                    if(p.length == 3) {
+                        if(AuthManager.registerPermanentUser(p[1], p[2])) {
+                            Logger.info("ADMIN: Manually created user " + p[1]);
+                        } else {
+                            Logger.error("ADMIN: User " + p[1] + " already exists.");
                         }
                     }
                 }

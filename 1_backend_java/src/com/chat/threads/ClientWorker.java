@@ -50,7 +50,6 @@ public class ClientWorker extends Thread {
         // Expected Format: AUTH:<TYPE>:<user>:<pass>
         if (line != null && line.startsWith("AUTH:")) {
             String[] parts = line.split(":");
-            // parts[0]=AUTH, parts[1]=TYPE (LOGIN/REGISTER), parts[2]=user, parts[3]=pass
             
             if (parts.length == 4) {
                 String type = parts[1];
@@ -60,11 +59,12 @@ public class ClientWorker extends Thread {
                 boolean isAuthenticated = false;
                 
                 if (type.equals("REGISTER")) {
+                    // Attempt to register; returns true if successful (meaning we are authenticated)
                     isAuthenticated = AuthManager.registerPermanentUser(user, pass);
                     if (isAuthenticated) Logger.info("New user registered: " + user);
                 }
                 
-                // Always try to login if registration was successful or if the request was LOGIN
+                // Then, attempt to log in (needed after successful registration or for standard login)
                 if (type.equals("LOGIN") || isAuthenticated) {
                     isAuthenticated = AuthManager.verifyLogin(user, pass);
                 }
