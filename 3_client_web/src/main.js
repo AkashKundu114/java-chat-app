@@ -12,15 +12,16 @@ const btnToggleMode = document.getElementById('btn-toggle-mode');
 const inpUsername = document.getElementById('inp-username');
 const inpPassword = document.getElementById('inp-password');
 const ipInput = document.getElementById('inp-ip'); 
+const inpMsg = document.getElementById('inp-message');
+const btnEmoji = document.getElementById('btn-emoji');
+const emojiPicker = document.getElementById('emoji-picker');
 
 // --- APP STATE ---
 let currentUser = "";
-let dmManager = null; // DMManager instance
+let dmManager = null;
 let isRegistering = false; 
 
 const debugBox = document.getElementById('debug-console');
-const inpMsg = document.getElementById('inp-message');
-const emojiPicker = document.getElementById('emoji-picker');
 
 // --- DEBUG LOGGER ---
 function debug(msg) {
@@ -34,27 +35,40 @@ function debug(msg) {
 document.addEventListener('DOMContentLoaded', () => {
     debug("SYSTEM READY: Waiting for connection.");
     
-    // 1. Auto-fill the hidden IP field
     if (ipInput && SETTINGS.DEFAULT_IP) {
         ipInput.value = SETTINGS.DEFAULT_IP;
         debug("CONFIG: Tunnel IP set to " + SETTINGS.DEFAULT_IP);
     }
 
-    // 2. Attach Listeners
     btnSubmitAuth.addEventListener('click', handleAuthSubmit);
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
-    // Logout listener
     const logoutBtn = document.getElementById('logout-icon-small');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             client.disconnect();
-            location.reload(); // Simple way to reset state
+            location.reload();
         });
     }
 
-    // Set initial UI state
-    toggleAuthMode(false); // Set to LOGIN by default
+    // Attach Attach button listener
+    const btnAttach = document.getElementById('btn-attach');
+    const inpFileUpload = document.getElementById('inp-file-upload');
+    if (btnAttach && inpFileUpload) {
+        btnAttach.addEventListener('click', () => {
+            inpFileUpload.click();
+        });
+        inpFileUpload.addEventListener('change', () => {
+            debug("FILE: Image selected for upload (Upload not implemented).");
+            if (dmManager) dmManager.sendDM(`(Attachment: ${inpFileUpload.files[0].name})`);
+            inpFileUpload.value = ''; // Clear input
+        });
+    }
+
+    // Initialize Emojis
+    initEmojiPicker();
+    
+    toggleAuthMode(false);
 });
 
 
@@ -101,45 +115,69 @@ function handleAuthSubmit() {
     
     debug(`AUTH: Attempting ${authType} to ${ip}`);
     
-    // CRITICAL: We need to pass the auth packet and user to the connect function.
-    // The client will send the packet when the connection is open.
     client.connect(ip, () => {
         debug("SEND: Auth Packet.");
         client.send(authPacket);
     });
 }
 
+// --- EMOJI LOGIC ---
+const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
+
+function initEmojiPicker() {
+    if (!emojiPicker) return;
+
+    emojis.forEach(em => {
+        const s = document.createElement('span');
+        s.className = 'emoji-btn';
+        s.innerText = em;
+        s.onclick = (e) => {
+            e.preventDefault();
+            if (inpMsg) inpMsg.value += em;
+            if (emojiPicker) emojiPicker.classList.add('hidden'); // Close after click
+        };
+        emojiPicker.appendChild(s);
+    });
+    
+    if (btnEmoji) {
+        btnEmoji.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            if (emojiPicker) emojiPicker.classList.toggle('hidden');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji) {
+            emojiPicker.classList.add('hidden');
+        }
+    });
+}
+
+
 // --- NETWORK HANDLER ---
 const handleIncoming = (raw) => {
     debug("RX: " + raw);
 
-    if (raw.startsWith("AUTH_REQUIRED")) {
-        debug("SERVER: Waiting for credentials.");
-        return; 
-    }
+    if (raw.startsWith("AUTH_REQUIRED")) return; 
     
     if (raw.startsWith("AUTH_SUCCESS:")) {
         currentUser = raw.split(":")[1];
         debug(`SUCCESS: Logged in as ${currentUser}.`);
         
-        // --- UI SWITCH ---
-        document.getElementById('layer-login').style.display = 'none';
-        const appLayer = document.getElementById('layer-app');
-        if (appLayer) appLayer.classList.remove('hidden'); 
+        UI.toggleLogin(false); 
         
-        // Initialize DM Manager and request user list
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
         return;
     }
     
     if (raw === "AUTH_FAILED") { 
-        debug("ERROR: Authentication Failed (Bad Password/User).");
-        alert("Authentication failed. Check credentials or register."); 
-        document.getElementById('layer-login').style.display = 'flex'; // Show login again
+        debug("ERROR: Authentication Failed (Bad Password/User or Registration Error).");
+        alert("Authentication failed. Check credentials or register a new user."); 
+        document.getElementById('layer-login').style.display = 'flex';
         return; 
     }
 
-    // Handle DM/UserList updates
     if (!dmManager) return;
     
     if (raw.startsWith("USERS:")) dmManager.updateUserList(raw);
@@ -160,8 +198,7 @@ const handleStatus = (act) => {
 const client = new SocketClient(handleIncoming, handleStatus);
 
 
-// --- DM MANAGER PROTOTYPE (REQUIRED FOR UI RENDERING) ---
-// This is the functional part that renders messages and handles sidebar clicks
+// --- DM MANAGER PROTOTYPE ---
 class DMManager {
     constructor(currentUser, onSendMessage) {
         this.currentUser = currentUser;
@@ -169,16 +206,25 @@ class DMManager {
         this.activeChatUser = null; 
         this.users = []; 
 
-        // Attach mobile back button logic
         const backBtn = document.getElementById('btn-back-contact');
         if(backBtn) backBtn.addEventListener('click', () => this.toggleMobileView('list'));
         
-        // Set up profile info
         const userHeader = document.getElementById('user-profile-name');
         if(userHeader) userHeader.innerText = currentUser;
         
         const avatar = document.getElementById('user-profile-avatar');
         if(avatar) avatar.innerText = currentUser.charAt(0).toUpperCase();
+
+        if (document.getElementById('form-chat')) {
+            document.getElementById('form-chat').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const txt = inpMsg.value.trim();
+                if(txt && this.activeChatUser) {
+                    this.sendDM(txt);
+                    inpMsg.value = "";
+                }
+            });
+        }
     }
 
     updateUserList(rawString) {
@@ -188,7 +234,8 @@ class DMManager {
             const match = u.match(/(.*)\((.*)\)/);
             if(match) return { name: match[1], status: match[2] };
             return { name: u, status: 'Offline' };
-        });
+        }).filter(u => u.name !== this.currentUser); // Filter out self
+
         this.renderSidebar();
     }
 
@@ -198,14 +245,10 @@ class DMManager {
 
         sidebarList.innerHTML = "";
         this.users.forEach(u => {
-            if (u.name === this.currentUser) return; 
-
-            const div = document.createElement('div');
             const isActive = this.activeChatUser === u.name;
+            const div = document.createElement('div');
             
-            // Use semantic classes defined in CSS
             div.className = `contact-item ${isActive ? 'active' : ''}`;
-            
             div.innerHTML = `
                 <div style="display: flex; align-items: center; min-width: 0;">
                     <div class="avatar-small">${u.name.charAt(0).toUpperCase()}</div>
@@ -222,7 +265,6 @@ class DMManager {
             };
             sidebarList.appendChild(div);
         });
-        lucide.createIcons();
     }
 
     openChat(username) {
@@ -234,12 +276,12 @@ class DMManager {
         if (headerName) headerName.innerText = username;
         if (headerAvatar) headerAvatar.innerText = username.charAt(0).toUpperCase();
 
-        document.getElementById('chat-area').innerHTML = ""; // Clear previous view
+        document.getElementById('chat-area').innerHTML = ""; 
         
         this.toggleMobileView('chat');
         this.renderSidebar(); 
         
-        // CRITICAL: Ask Server for History from MongoDB
+        // Request history from MongoDB
         this.onSendMessage(`HISTORY:${username}`);
     }
 
@@ -259,7 +301,6 @@ class DMManager {
     }
 
     handleIncomingDM(sender, text) {
-        // Check if message belongs to current active window
         const relevant = (sender === this.activeChatUser) || (sender === this.currentUser && this.activeChatUser);
         
         if (relevant) {
@@ -270,7 +311,6 @@ class DMManager {
 
     sendDM(text) {
         if (!this.activeChatUser) return;
-        // Render locally first (Optimistic)
         this.renderMessageBubble({ text: text, isMe: true });
         this.onSendMessage(`TO:${this.activeChatUser}:${text}`);
     }
@@ -296,47 +336,3 @@ class DMManager {
         document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
     }
 }
-
-
-// --- EMOJI & INPUT LOGIC ---
-const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
-const btnEmoji = document.getElementById('btn-emoji');
-
-emojis.forEach(em => {
-    const s = document.createElement('span');
-    s.className = 'emoji-btn';
-    s.innerText = em;
-    s.onclick = () => {
-        if (inpMsg) inpMsg.value += em;
-    };
-    if (emojiPicker) emojiPicker.appendChild(s);
-});
-
-// Attach event listeners after DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (btnEmoji) {
-        btnEmoji.addEventListener('click', (e) => {
-            e.preventDefault(); // Stop form submission
-            e.stopPropagation(); 
-            if (emojiPicker) emojiPicker.classList.toggle('hidden');
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji) {
-            emojiPicker.classList.add('hidden');
-        }
-    });
-
-    if (document.getElementById('form-chat')) {
-        document.getElementById('form-chat').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const txt = inpMsg.value.trim();
-            if(txt && dmManager) {
-                dmManager.sendDM(txt);
-                inpMsg.value = "";
-                if (emojiPicker) emojiPicker.classList.add('hidden');
-            }
-        });
-    }
-});
