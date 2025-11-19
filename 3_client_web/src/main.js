@@ -39,8 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ipInput && SETTINGS.DEFAULT_IP) {
         ipInput.value = SETTINGS.DEFAULT_IP;
         debug("Tunnel IP set: " + SETTINGS.DEFAULT_IP);
-    } else {
-        debug("WARNING: Default IP not found in settings.js.");
     }
 
     // 2. Attach Listeners
@@ -48,14 +46,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
     // Set initial UI state
-    toggleAuthMode(); // Set to LOGIN by default
+    toggleAuthMode(false); // Set to LOGIN by default
 });
 
 
 // --- AUTHENTICATION HANDLERS ---
 
-function toggleAuthMode() {
-    isRegistering = !isRegistering;
+function toggleAuthMode(toggle = true) {
+    if (toggle) {
+        isRegistering = !isRegistering;
+    }
+    
     if (isRegistering) {
         loginTitle.innerText = "CREATE NEW ACCOUNT";
         btnSubmitAuth.innerHTML = '<i data-lucide="user-plus"></i> REGISTER';
@@ -77,8 +78,10 @@ function handleAuthSubmit() {
         alert("Username and Password are required.");
         return;
     }
+    
     if (!ip || ip.includes("your-subdomain")) {
-        alert("ERROR: Please update settings.js with your LocalTunnel/Ngrok URL.");
+        debug("ERROR: Tunnel IP not set or is generic.");
+        alert("ERROR: Please check settings.js for the correct LocalTunnel/Ngrok URL.");
         return;
     }
     
@@ -87,7 +90,7 @@ function handleAuthSubmit() {
     
     debug(`Auth attempt (${authType}) to ${ip}`);
     
-    // 1. Send connection request with callback
+    // Connect with callback to send auth packet immediately after open
     client.connect(ip, () => {
         debug("Sending Auth Packet...");
         client.send(authPacket);
@@ -103,9 +106,11 @@ const handleIncoming = (raw) => {
     if (raw.startsWith("AUTH_SUCCESS:")) {
         currentUser = raw.split(":")[1];
         debug(`Login Success as ${currentUser}. Switching UI.`);
-        UI.toggleLogin(false);
         
-        // Populate profile name on app load
+        // --- CRITICAL FIX: Ensure App Layer is Displayed and Profile is set ---
+        document.getElementById('layer-login').style.display = 'none';
+        document.getElementById('layer-app').style.display = 'grid'; // Use grid for desktop
+        
         document.getElementById('my-profile-username').innerText = currentUser;
         document.getElementById('my-profile-avatar').innerText = currentUser.charAt(0).toUpperCase();
 
@@ -114,9 +119,9 @@ const handleIncoming = (raw) => {
     }
     
     if (raw === "AUTH_FAILED") { 
-        debug("CRITICAL: Authentication Failed.");
+        debug("CRITICAL: Authentication Failed. Credentials mismatch.");
         alert("Authentication failed. Please check credentials or ensure registration was successful."); 
-        location.reload(); 
+        document.getElementById('layer-login').style.display = 'flex'; // Show login again
         return; 
     }
 
@@ -143,59 +148,19 @@ const client = new SocketClient(handleIncoming, handleStatus);
 
 // --- DM MANAGER PROTOTYPE (REQUIRED FOR UI RENDERING) ---
 DMManager.prototype.renderMessageBubble = function(msg) {
-    const div = document.createElement('div');
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    // Determine direction and bubble style
     const isMe = msg.isMe;
     
-    div.className = `msg-wrapper ${isMe ? 'right' : 'left'}`;
-    div.innerHTML = `
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${isMe ? 'right' : 'left'}`;
+    
+    wrapper.innerHTML = `
         <div class="msg ${isMe ? 'msg-me' : 'msg-other'}">
             ${msg.text}
-            <span class="msg-time">${time}</span>
+            <span class="msg-time" style="color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)'};">${time}</span>
         </div>
     `;
-    document.getElementById('chat-area').appendChild(div);
-};
-
-DMManager.prototype.renderSidebar = function() {
-    const sidebarList = document.getElementById('sidebar-list');
-    if (!sidebarList) return;
-    sidebarList.innerHTML = "";
-
-    this.users.forEach(u => {
-        if (u.name === this.currentUser) return; 
-
-        const div = document.createElement('div');
-        const isActive = this.activeChatUser === u.name;
-        
-        div.className = `contact-item ${isActive ? 'active' : ''}`;
-        
-        div.innerHTML = `
-            <div style="display: flex; align-items: center;">
-                <div class="avatar-small" style="background:${isActive ? '#35465C' : '#E0E0E0'}; color:${isActive ? 'white' : 'var(--accent-dark)'};">
-                    ${u.name.charAt(0).toUpperCase()}
-                </div>
-                <div class="contact-info" style="margin-left: 0;">
-                    <span class="contact-name">${u.name}</span>
-                    <span class="last-message" style="color: ${u.status === 'Online' ? '#4CAF50' : 'var(--text-color-light)'};">
-                        ${u.status === 'Online' ? 'Active now' : u.status}
-                    </span>
-                </div>
-            </div>
-            <span style="color: var(--text-color-light); font-size: 0.8rem;"></span>
-        `;
-        
-        div.onclick = () => {
-            this.openChat(u.name);
-            document.getElementById('chat-header-avatar').innerText = u.name.charAt(0).toUpperCase();
-            document.getElementById('chat-header-status').innerText = u.status === 'Online' ? 'Active now' : 'Offline';
-            lucide.createIcons();
-        };
-        sidebarList.appendChild(div);
-    });
-    lucide.createIcons();
+    document.getElementById('chat-area').appendChild(wrapper);
 };
 
 DMManager.prototype.openChat = function(username) {
@@ -228,37 +193,40 @@ emojis.forEach(em => {
     if (emojiPicker) emojiPicker.appendChild(s);
 });
 
-if (btnEmoji) {
-    btnEmoji.addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        if (emojiPicker) emojiPicker.classList.toggle('hidden');
-    });
-}
+// Attach event listeners after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (btnEmoji) {
+        btnEmoji.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            if (emojiPicker) emojiPicker.classList.toggle('hidden');
+        });
+    }
 
-document.addEventListener('click', (e) => {
-    if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji && !btnEmoji.contains(e.target)) {
-        emojiPicker.classList.add('hidden');
+    document.addEventListener('click', (e) => {
+        if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji && !btnEmoji.contains(e.target)) {
+            emojiPicker.classList.add('hidden');
+        }
+    });
+
+    if (document.getElementById('form-chat')) {
+        document.getElementById('form-chat').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const txt = inpMsg.value.trim();
+            if(txt && dmManager) {
+                dmManager.sendDM(txt);
+                inpMsg.value = "";
+                if (emojiPicker) emojiPicker.classList.add('hidden');
+            }
+        });
+    }
+
+    // Mobile back button logic
+    if (document.getElementById('btn-back-contact')) {
+        document.getElementById('btn-back-contact').addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar-panel').classList.remove('hidden');
+                document.getElementById('main-chat-panel').classList.add('hidden');
+            }
+        });
     }
 });
-
-if (document.getElementById('form-chat')) {
-    document.getElementById('form-chat').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const txt = inpMsg.value.trim();
-        if(txt && dmManager) {
-            dmManager.sendDM(txt);
-            inpMsg.value = "";
-            if (emojiPicker) emojiPicker.classList.add('hidden');
-        }
-    });
-}
-
-// Mobile back button logic
-if (document.getElementById('btn-back-contact')) {
-    document.getElementById('btn-back-contact').addEventListener('click', () => {
-        if (window.innerWidth < 768) {
-            document.getElementById('sidebar-panel').classList.remove('hidden');
-            document.getElementById('main-chat-panel').classList.add('hidden');
-        }
-    });
-}
