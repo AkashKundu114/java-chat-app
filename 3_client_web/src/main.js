@@ -1,35 +1,138 @@
 ﻿import { DOM } from './managers/domManager.js';
 import { UI } from './managers/uiManager.js';
 import { SocketClient } from './core/socketClient.js';
-import { QRManager } from './managers/qrManager.js';
 import { DMManager } from './managers/dmManager.js';
 
-// Import settings to get the default IP
+// Import settings
 import { SETTINGS } from './config/settings.js'; 
 
 lucide.createIcons();
 
-// --- Initialization Logic ---
+// --- UI Elements for new Login ---
+const loginTitle = document.getElementById('login-title');
+const btnSubmitAuth = document.getElementById('btn-submit-auth');
+const btnToggleMode = document.getElementById('btn-toggle-mode');
+const inpUsername = document.getElementById('inp-username');
+const inpPassword = document.getElementById('inp-password');
+
+// --- APP STATE ---
+let currentUser = "";
+let dmManager = null;
+let isRegistering = false;
+const debugBox = document.getElementById('debug-console');
 const inpMsg = document.getElementById('inp-message');
 
-// FIX: Automatically fill the hidden IP field on load
+// --- DEBUG LOGGER ---
+function debug(msg) {
+    const time = new Date().toLocaleTimeString().split(' ')[0];
+    if(debugBox) debugBox.innerHTML += `<div>[${time}] ${msg}</div>`;
+    if(debugBox) debugBox.scrollTop = debugBox.scrollHeight;
+}
+
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    debug("App Ready.");
+    // 1. Fill the hidden IP field
     const ipInput = document.getElementById('inp-ip');
-    
-    // CRITICAL: Inject the default IP/Tunnel URL into the hidden field
     if (ipInput && SETTINGS.DEFAULT_IP) {
         ipInput.value = SETTINGS.DEFAULT_IP;
+        debug("Tunnel IP set: " + SETTINGS.DEFAULT_IP);
     }
+
+    // 2. Attach Auth Submit Listener
+    btnSubmitAuth.addEventListener('click', handleAuthSubmit);
+    btnToggleMode.addEventListener('click', toggleAuthMode);
 });
-// ----------------------------
 
 
-// --- EMOJI LOGIC ---
+// --- AUTHENTICATION LOGIC ---
+
+function toggleAuthMode() {
+    isRegistering = !isRegistering;
+    if (isRegistering) {
+        loginTitle.innerText = "CREATE NEW ACCOUNT";
+        btnSubmitAuth.innerHTML = '<i data-lucide="user-plus"></i> REGISTER';
+        btnToggleMode.innerHTML = 'Already registered? **LOGIN**';
+    } else {
+        loginTitle.innerText = "SECURE LOGIN";
+        btnSubmitAuth.innerHTML = '<i data-lucide="log-in"></i> LOGIN';
+        btnToggleMode.innerHTML = 'Don\'t have an account? **REGISTER**';
+    }
+    lucide.createIcons();
+}
+
+function handleAuthSubmit() {
+    const user = inpUsername.value.trim();
+    const pass = inpPassword.value.trim();
+    const ip = document.getElementById('inp-ip').value.trim();
+
+    if (!user || !pass) {
+        alert("Username and Password are required.");
+        return;
+    }
+    if (!ip) {
+        alert("Error: Tunnel IP not configured. Check settings.js.");
+        return;
+    }
+    
+    // Determine packet type
+    const authType = isRegistering ? "REGISTER" : "LOGIN";
+    const authPacket = `AUTH:${authType}:${user}:${pass}`;
+    
+    debug(`Auth attempt (${authType}) to ${ip}`);
+    
+    // Connect and send packet
+    client.connect(ip);
+    
+    // Wait for WebSocket open event
+    setTimeout(() => {
+        client.send(authPacket);
+    }, 500); 
+}
+
+// --- NETWORK HANDLER ---
+
+const handleIncoming = (raw) => {
+    debug("RX: " + raw);
+
+    if (raw.startsWith("AUTH_REQ")) return; // Server asking for auth, handled by handleAuthSubmit
+    
+    if (raw.startsWith("AUTH_SUCCESS:")) {
+        currentUser = raw.split(":")[1];
+        debug(`Login Success as ${currentUser}. Switching UI.`);
+        UI.toggleLogin(false);
+        dmManager = new DMManager(currentUser, (packet) => client.send(packet));
+        return;
+    }
+    
+    if (raw === "AUTH_FAILED") { 
+        debug("CRITICAL: Authentication Failed.");
+        alert("Login failed. Check credentials or try registering."); 
+        location.reload(); 
+        return; 
+    }
+
+    if (!dmManager) return;
+    if (raw.startsWith("USERS:")) dmManager.updateUserList(raw);
+    if (raw.startsWith("DM:")) {
+        const p = raw.split(":", 3);
+        if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
+    }
+    // HISTORY messages (DM:sender:content) are also handled by handleIncomingDM
+};
+
+const client = new SocketClient(handleIncoming, (act) => {
+    UI.setStatus(act);
+    if(act) debug("WebSocket Connected!");
+    else debug("WebSocket Disconnected/Failed");
+});
+
+// --- EMOJI & MESSAGE LOGIC (Unchanged) ---
+
 const emojis = ["😀","😂","😍","🥺","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","🙌","✨","💩","🤡","💀","💪","🙏","👋","🌹","🍀"];
 const emojiPicker = document.getElementById('emoji-picker');
 const btnEmoji = document.getElementById('btn-emoji');
 
-// 1. Build Picker
 emojis.forEach(em => {
     const s = document.createElement('span');
     s.className = 'emoji-btn';
@@ -41,89 +144,24 @@ emojis.forEach(em => {
     emojiPicker.appendChild(s);
 });
 
-// 2. Toggle Picker
 btnEmoji.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent closing immediately
+    e.stopPropagation(); 
     emojiPicker.classList.toggle('hidden');
 });
 
-// 3. Close Picker on click outside
 document.addEventListener('click', (e) => {
-    if (!emojiPicker.contains(e.target) && e.target !== btnEmoji && !btnEmoji.contains(e.target)) {
+    if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji && !btnEmoji.contains(e.target)) {
         emojiPicker.classList.add('hidden');
     }
 });
 
-// --- OVERRIDE RENDER FUNCTION FOR NEW LAYOUT ---
 DMManager.prototype.renderMessageBubble = function(msg) {
     const div = document.createElement('div');
-    // Use 'right' for me, 'left' for others
     div.className = `msg-wrapper ${msg.isMe ? 'right' : 'left'}`;
-    
-    // Format Time
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    // The message content now includes the timestamp inside the bubble
-    div.innerHTML = `
-        <div class="msg ${msg.isMe ? 'msg-me' : 'msg-other'}">
-            ${msg.text}
-            <span class="msg-time">${time}</span>
-        </div>
-    `;
+    div.innerHTML = `<div class="msg ${msg.isMe ? 'msg-me' : 'msg-other'}">${msg.text}<span class="msg-time">${time}</span></div>`;
     document.getElementById('chat-area').appendChild(div);
 };
-
-
-// --- REST OF APP LOGIC (Standard) ---
-let currentUser = "";
-let dmManager = null;
-const placeholder = document.getElementById('camera-placeholder');
-
-const handleIncoming = (raw) => {
-    if (raw.startsWith("AUTH_REQ")) return;
-    if (raw.startsWith("AUTH_SUCCESS:")) {
-        currentUser = raw.split(":")[1];
-        UI.toggleLogin(false);
-        dmManager = new DMManager(currentUser, (packet) => client.send(packet));
-        return;
-    }
-    if (raw === "AUTH_FAILED") { alert("Token Invalid"); location.reload(); return; }
-    
-    if (!dmManager) return;
-    if (raw.startsWith("USERS:")) dmManager.updateUserList(raw);
-    if (raw.startsWith("DM:")) {
-        const p = raw.split(":", 3);
-        if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
-    }
-};
-
-const client = new SocketClient(handleIncoming, (act) => UI.setStatus(act));
-
-const qr = new QRManager((t) => {
-    // The IP value is now read from the hidden input field
-    const ip = DOM.ipInput.value.trim(); 
-    if (!ip) { alert("Error: Tunnel IP not set. Check settings.js."); return; }
-    
-    placeholder.innerText = "Verifying...";
-    client.connect(ip);
-    setTimeout(() => client.send("AUTH:"+t), 500);
-});
-
-document.getElementById('btn-activate-cam').addEventListener('click', () => {
-    // If the input is empty, alert user before starting the camera
-    if (!document.getElementById('inp-ip').value.trim()) {
-        alert("Error: Tunnel Address not found. Please check settings.js and push code.");
-        return;
-    }
-    
-    placeholder.style.display = 'none';
-    qr.startScanner("qr-reader");
-});
-
-document.getElementById('btn-upload-qr').addEventListener('click', () => document.getElementById('inp-file-qr').click());
-document.getElementById('inp-file-qr').addEventListener('change', (e) => {
-    if(e.target.files[0]) qr.scanFromFile(e.target.files[0]);
-});
 
 document.getElementById('form-chat').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -131,7 +169,7 @@ document.getElementById('form-chat').addEventListener('submit', (e) => {
     if(txt && dmManager) {
         dmManager.sendDM(txt);
         inpMsg.value = "";
-        emojiPicker.classList.add('hidden'); // Close emoji on send
+        if (emojiPicker) emojiPicker.classList.add('hidden');
     }
 });
 

@@ -6,40 +6,36 @@
     <title>JavaChat Professional</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <!-- LOGIN -->
+    <!-- LOGIN/REGISTER LAYER -->
     <div id="layer-login">
         <div class="login-card">
-            <h2 class="login-title">SECURE ACCESS REQUIRED</h2>
+            <h2 class="login-title" id="login-title">SECURE LOGIN</h2>
             
-            <!-- DEBUG/STATUS CONSOLE -->
             <div id="debug-console" style="font-family:monospace; font-size:10px; color:#5D4037; background:#F8F8F8; padding:5px; margin-bottom:10px; height:40px; overflow:hidden; border:1px solid #CCCCCC;">> System Ready.</div>
             
-            <!-- HIDDEN INPUT FIELD (The value will be set by main.js) -->
+            <!-- Hidden Input for Tunnel Address -->
             <input id="inp-ip" type="text" class="input-box hidden" value="" aria-hidden="true" readonly>
             
-            <!-- CAMERA FRAME -->
-            <div class="camera-frame">
-                <div id="qr-reader" style="width:100%; height:100%;"></div>
-                <div id="camera-placeholder" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; flex-direction: column;">
-                    <i data-lucide="scan" style="width: 32px; height: 32px; color: #999; margin-bottom: 5px;"></i>
-                    <span>Scan Login Code</span>
-                </div>
-            </div>
+            <!-- Login/Register Inputs -->
+            <input id="inp-username" type="text" class="input-box" placeholder="Username">
+            <input id="inp-password" type="password" class="input-box" placeholder="Password">
 
-            <!-- BUTTONS -->
-            <div class="btn-group">
-                <button id="btn-activate-cam" class="btn btn-primary"><i data-lucide="camera"></i> SCAN ID</button>
-                <button id="btn-upload-qr" class="btn btn-secondary"><i data-lucide="image"></i> GALLERY</button>
-            </div>
-            <input type="file" id="inp-file-qr" accept="image/*" class="hidden">
+            <!-- Primary Login/Register Button -->
+            <button id="btn-submit-auth" class="btn btn-primary" style="margin-bottom: 15px;">
+                <i data-lucide="log-in" style="width:20px;"></i> LOGIN
+            </button>
+            
+            <!-- Toggle Button -->
+            <button id="btn-toggle-mode" class="btn btn-secondary">
+                Don't have an account? **REGISTER**
+            </button>
         </div>
     </div>
 
-    <!-- APP LAYER (Unchanged structure) -->
+    <!-- APP LAYER -->
     <div id="layer-app" class="hidden">
         <aside id="sidebar-panel" class="sidebar">
             <div class="header">

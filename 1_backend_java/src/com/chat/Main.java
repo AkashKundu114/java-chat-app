@@ -3,38 +3,33 @@ package com.chat;
 import com.chat.core.ConnectionListener;
 import com.chat.services.DatabaseManager;
 import com.chat.services.AuthManager;
+import com.chat.utils.Logger;
 import java.net.InetAddress;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            System.out.println("::: JAVA CHAT SERVER (LOCAL DB) :::");
+            System.out.println("::: JAVA CHAT SERVER (DB) :::");
             
-            // Connect to Local MongoDB
-            DatabaseManager.init();
+            DatabaseManager.init(); // Connect to MongoDB
             
             System.out.println("Host IP: " + InetAddress.getLocalHost().getHostAddress());
             
-            // Start Server Thread
             new Thread(() -> new ConnectionListener().start()).start();
 
-            // Admin Loop (Direct Input)
-            try (Scanner sc = new Scanner(System.in)) {
-                System.out.println("COMMAND: create <username> <password>");
-                
-                while (true) {
-                    String cmd = sc.nextLine();
-                    if (cmd.startsWith("create ")) {
-                        String[] parts = cmd.split(" ");
-                        if (parts.length == 3) {
-                            String user = parts[1];
-                            String pass = parts[2];
-                            if (AuthManager.registerPermanentUser(user, pass)) {
-                                System.out.println(">> QR STRING: LOGIN:" + user + ":" + pass);
-                            } else {
-                                System.out.println("User already exists!");
-                            }
+            Scanner sc = new Scanner(System.in);
+            System.out.println("ADMIN CMD: create <user> <pass> (For quick manual creation)");
+            
+            while (true) {
+                String cmd = sc.nextLine();
+                if (cmd.startsWith("create ")) {
+                    String[] p = cmd.split(" ");
+                    if(p.length == 3) {
+                        if(AuthManager.registerPermanentUser(p[1], p[2])) {
+                            Logger.info("ADMIN: Manually created user " + p[1]);
+                        } else {
+                            Logger.error("ADMIN: User " + p[1] + " already exists.");
                         }
                     }
                 }

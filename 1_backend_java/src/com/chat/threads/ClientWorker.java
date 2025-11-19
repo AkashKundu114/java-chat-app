@@ -46,12 +46,32 @@ public class ClientWorker extends Thread {
     private boolean authenticate() throws IOException {
         out.println(Messages.AUTH_REQ);
         String line = in.readLine();
-        if (line != null && line.startsWith("AUTH:LOGIN:")) {
-            String[] p = line.split(":");
-            if (p.length == 4) {
-                if (AuthManager.verifyLogin(p[2], p[3])) {
-                    this.username = p[2];
-                    out.println("AUTH_SUCCESS:" + username);
+        
+        // Expected Format: AUTH:<TYPE>:<user>:<pass>
+        if (line != null && line.startsWith("AUTH:")) {
+            String[] parts = line.split(":");
+            // parts[0]=AUTH, parts[1]=TYPE (LOGIN/REGISTER), parts[2]=user, parts[3]=pass
+            
+            if (parts.length == 4) {
+                String type = parts[1];
+                String user = parts[2];
+                String pass = parts[3];
+                
+                boolean isAuthenticated = false;
+                
+                if (type.equals("REGISTER")) {
+                    isAuthenticated = AuthManager.registerPermanentUser(user, pass);
+                    if (isAuthenticated) Logger.info("New user registered: " + user);
+                }
+                
+                // Always try to login if registration was successful or if the request was LOGIN
+                if (type.equals("LOGIN") || isAuthenticated) {
+                    isAuthenticated = AuthManager.verifyLogin(user, pass);
+                }
+                
+                if (isAuthenticated) {
+                    this.username = user;
+                    out.println("AUTH_SUCCESS:" + user);
                     return true;
                 }
             }
