@@ -12,7 +12,7 @@ const btnSubmitAuth = document.getElementById('btn-submit-auth');
 const btnToggleMode = document.getElementById('btn-toggle-mode');
 const inpUsername = document.getElementById('inp-username');
 const inpPassword = document.getElementById('inp-password');
-const ipInput = document.getElementById('inp-ip');
+const ipInput = document.getElementById('inp-ip'); 
 
 // --- APP STATE ---
 let currentUser = "";
@@ -48,8 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
     // Set initial UI state
-    toggleAuthMode(); 
-    toggleAuthMode(); // Call twice to set default (LOGIN) state
+    toggleAuthMode(); // Set to LOGIN by default
 });
 
 
@@ -88,8 +87,7 @@ function handleAuthSubmit() {
     
     debug(`Auth attempt (${authType}) to ${ip}`);
     
-    // 1. Send connection request
-    // 2. The callback function executes ONLY upon successful connection (onopen)
+    // 1. Send connection request with callback
     client.connect(ip, () => {
         debug("Sending Auth Packet...");
         client.send(authPacket);
@@ -97,28 +95,26 @@ function handleAuthSubmit() {
 }
 
 // --- NETWORK HANDLER ---
-// The connect method now needs a slight adjustment to accept the callback, 
-// but we will do this adjustment inside socketClient.js in the next step.
-
 const handleIncoming = (raw) => {
     debug("RX: " + raw);
 
-    if (raw.startsWith("AUTH_REQUIRED")) {
-        // This means the client needs to re-send auth if it fails to send it in the onopen event.
-        debug("Server requested Auth, but client should have sent it already.");
-        return; 
-    }
+    if (raw.startsWith("AUTH_REQUIRED")) return; 
     
     if (raw.startsWith("AUTH_SUCCESS:")) {
         currentUser = raw.split(":")[1];
         debug(`Login Success as ${currentUser}. Switching UI.`);
         UI.toggleLogin(false);
+        
+        // Populate profile name on app load
+        document.getElementById('my-profile-username').innerText = currentUser;
+        document.getElementById('my-profile-avatar').innerText = currentUser.charAt(0).toUpperCase();
+
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
         return;
     }
     
     if (raw === "AUTH_FAILED") { 
-        debug("CRITICAL: Authentication Failed (Check Hash or User Existence).");
+        debug("CRITICAL: Authentication Failed.");
         alert("Authentication failed. Please check credentials or ensure registration was successful."); 
         location.reload(); 
         return; 
@@ -141,12 +137,84 @@ const handleStatus = (act) => {
     else debug("WebSocket Disconnected/Failed");
 };
 
-// Initialize client
+// Initialize client (requires socketClient.js to be updated with callback support)
 const client = new SocketClient(handleIncoming, handleStatus);
 
 
-// --- EMOJI & MESSAGE LOGIC (Simplified) ---
-const emojis = ["😀","😂","😍","🥺","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","🙌","✨","💩","🤡","💀","💪","🙏","👋","🌹","🍀"];
+// --- DM MANAGER PROTOTYPE (REQUIRED FOR UI RENDERING) ---
+DMManager.prototype.renderMessageBubble = function(msg) {
+    const div = document.createElement('div');
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // Determine direction and bubble style
+    const isMe = msg.isMe;
+    
+    div.className = `msg-wrapper ${isMe ? 'right' : 'left'}`;
+    div.innerHTML = `
+        <div class="msg ${isMe ? 'msg-me' : 'msg-other'}">
+            ${msg.text}
+            <span class="msg-time">${time}</span>
+        </div>
+    `;
+    document.getElementById('chat-area').appendChild(div);
+};
+
+DMManager.prototype.renderSidebar = function() {
+    const sidebarList = document.getElementById('sidebar-list');
+    if (!sidebarList) return;
+    sidebarList.innerHTML = "";
+
+    this.users.forEach(u => {
+        if (u.name === this.currentUser) return; 
+
+        const div = document.createElement('div');
+        const isActive = this.activeChatUser === u.name;
+        
+        div.className = `contact-item ${isActive ? 'active' : ''}`;
+        
+        div.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <div class="avatar-small" style="background:${isActive ? '#35465C' : '#E0E0E0'}; color:${isActive ? 'white' : 'var(--accent-dark)'};">
+                    ${u.name.charAt(0).toUpperCase()}
+                </div>
+                <div class="contact-info" style="margin-left: 0;">
+                    <span class="contact-name">${u.name}</span>
+                    <span class="last-message" style="color: ${u.status === 'Online' ? '#4CAF50' : 'var(--text-color-light)'};">
+                        ${u.status === 'Online' ? 'Active now' : u.status}
+                    </span>
+                </div>
+            </div>
+            <span style="color: var(--text-color-light); font-size: 0.8rem;"></span>
+        `;
+        
+        div.onclick = () => {
+            this.openChat(u.name);
+            document.getElementById('chat-header-avatar').innerText = u.name.charAt(0).toUpperCase();
+            document.getElementById('chat-header-status').innerText = u.status === 'Online' ? 'Active now' : 'Offline';
+            lucide.createIcons();
+        };
+        sidebarList.appendChild(div);
+    });
+    lucide.createIcons();
+};
+
+DMManager.prototype.openChat = function(username) {
+    this.activeChatUser = username;
+    document.getElementById('chat-header-name').innerText = username;
+    document.getElementById('chat-area').innerHTML = ""; 
+    
+    // Toggle view for mobile devices
+    if (window.innerWidth < 768) {
+        document.getElementById('sidebar-panel').classList.add('hidden');
+        document.getElementById('main-chat-panel').classList.remove('hidden');
+    }
+
+    this.renderSidebar(); 
+    this.onSendMessage(`HISTORY:${username}`);
+};
+
+// --- EMOJI & INPUT LOGIC ---
+const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
 const btnEmoji = document.getElementById('btn-emoji');
 
 emojis.forEach(em => {
@@ -173,14 +241,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-DMManager.prototype.renderMessageBubble = function(msg) {
-    const div = document.createElement('div');
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    div.className = `msg-wrapper ${msg.isMe ? 'right' : 'left'}`;
-    div.innerHTML = `<div class="msg ${msg.isMe ? 'msg-me' : 'msg-other'}">${msg.text}<span class="msg-time">${time}</span></div>`;
-    document.getElementById('chat-area').appendChild(div);
-};
-
 if (document.getElementById('form-chat')) {
     document.getElementById('form-chat').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -193,6 +253,12 @@ if (document.getElementById('form-chat')) {
     });
 }
 
-if (document.getElementById('btn-logout')) {
-    document.getElementById('btn-logout').addEventListener('click', () => { client.disconnect(); location.reload(); });
+// Mobile back button logic
+if (document.getElementById('btn-back-contact')) {
+    document.getElementById('btn-back-contact').addEventListener('click', () => {
+        if (window.innerWidth < 768) {
+            document.getElementById('sidebar-panel').classList.remove('hidden');
+            document.getElementById('main-chat-panel').classList.add('hidden');
+        }
+    });
 }

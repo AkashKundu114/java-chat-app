@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JavaChat Professional</title>
+    <title>JavaChat Pro</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -36,45 +36,82 @@
     </div>
 
     <!-- APP LAYER -->
-    <div id="layer-app" class="hidden">
-        <aside id="sidebar-panel" class="sidebar">
-            <div class="header">
-                <span style="font-weight:bold; font-size:1.1rem; color:#111;">Contacts</span>
+    <div id="layer-app" class="app-container hidden">
+        
+        <!-- 1. NAVIGATION PANEL (Leftmost column - Fixed width) -->
+        <aside class="nav-panel">
+            <div class="nav-top">
+                <div class="profile-avatar-large" id="my-profile-avatar">U</div> 
+                <span class="profile-username" id="my-profile-username">Current User</span>
             </div>
-            <div id="sidebar-list" class="contact-list no-scrollbar">
-                <div style="text-align:center; color:#999; margin-top:20px;">Loading users...</div>
+            <div class="nav-icons">
+                <div class="nav-icon active"><i data-lucide="message-square"></i></div>
+                <div class="nav-icon"><i data-lucide="bell"></i></div>
+                <div class="nav-icon"><i data-lucide="settings"></i></div>
+            </div>
+            <div class="nav-bottom">
+                <button id="btn-logout" class="nav-icon logout"><i data-lucide="log-out"></i></button>
             </div>
         </aside>
 
-        <main id="main-chat-panel" class="chat-panel hidden">
-            <!-- Header -->
-            <div class="header">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <button id="btn-back-contact" class="btn-icon"><i data-lucide="arrow-left"></i></button>
-                    <div class="avatar" id="chat-avatar" style="width:35px; height:35px; font-size:14px; background: #5D4037; color: white;">?</div>
-                    <span id="chat-header-title" style="font-weight:bold; color:#111;">User</span>
-                </div>
-                <button id="btn-logout" class="btn-icon"><i data-lucide="log-out"></i></button>
+        <!-- 2. CONTACTS PANEL (Middle column - Sidebar) -->
+        <aside id="sidebar-panel" class="contact-panel">
+            <div class="search-bar">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" placeholder="Search contacts..." class="search-input">
             </div>
 
-            <!-- Messages -->
-            <div id="chat-area" class="chat-messages no-scrollbar"></div>
+            <div class="contact-section">
+                <div class="section-title">PEOPLE</div>
+                <div id="sidebar-list" class="contact-list no-scrollbar">
+                    <!-- Contact items will be injected here by JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 3. CHAT MAIN PANEL (Rightmost column - Main view) -->
+        <main id="main-chat-panel" class="chat-main-panel hidden">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <button id="btn-back-contact" class="btn-icon mobile-only"><i data-lucide="arrow-left"></i></button>
+                    <div class="avatar-small" id="chat-header-avatar">?</div>
+                    <div>
+                        <span class="chat-header-name" id="chat-header-name">Select Contact</span>
+                        <span class="chat-header-status" id="chat-header-status">Offline</span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <i data-lucide="phone" class="header-icon"></i>
+                    <i data-lucide="video" class="header-icon"></i>
+                    <i data-lucide="more-horizontal" class="header-icon"></i>
+                </div>
+            </div>
+
+            <div id="chat-area" class="chat-messages no-scrollbar">
+                <div class="welcome-message">
+                    <h3>Welcome to JavaChat Pro!</h3>
+                    <p>Select a contact from the left panel to start chatting.</p>
+                </div>
+            </div>
+
+            <!-- Input Footer -->
+            <form id="form-chat" class="chat-input-container">
+                <button type="button" class="input-action-btn"><i data-lucide="paperclip"></i></button>
+                
+                <input id="inp-message" type="text" placeholder="Type your message..." class="message-input">
+                
+                <button type="button" id="btn-emoji" class="input-action-btn"><i data-lucide="smile"></i></button>
+                <button type="submit" class="input-action-btn send-btn"><i data-lucide="send"></i></button>
+            </form>
 
             <!-- Emoji Picker (Hidden by Default) -->
-            <div id="emoji-picker" class="hidden">
+            <div id="emoji-picker" class="emoji-picker hidden">
                 <!-- Emojis injected by JS -->
             </div>
-
-            <!-- Input Bar -->
-            <form id="form-chat" class="chat-input-area">
-                <button type="button" id="btn-emoji" class="btn-icon"><i data-lucide="smile"></i></button>
-                <input id="inp-message" type="text" class="input-box-chat" placeholder="Type message..." autocomplete="off">
-                <button type="submit" class="btn-send"><i data-lucide="send" style="width:18px;"></i></button>
-            </form>
         </main>
     </div>
 
-    <!-- Load Main Module -->
+    <!-- Main Logic Script -->
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
