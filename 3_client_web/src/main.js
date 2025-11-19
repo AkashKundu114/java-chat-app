@@ -2,8 +2,6 @@
 import { UI } from './managers/uiManager.js';
 import { SocketClient } from './core/socketClient.js';
 import { DMManager } from './managers/dmManager.js';
-
-// Import settings (assuming this still has DEFAULT_IP for local/tunnel)
 import { SETTINGS } from './config/settings.js'; 
 
 lucide.createIcons();
@@ -14,12 +12,12 @@ const btnSubmitAuth = document.getElementById('btn-submit-auth');
 const btnToggleMode = document.getElementById('btn-toggle-mode');
 const inpUsername = document.getElementById('inp-username');
 const inpPassword = document.getElementById('inp-password');
-const ipInput = document.getElementById('inp-ip'); // Hidden input
+const ipInput = document.getElementById('inp-ip');
 
 // --- APP STATE ---
 let currentUser = "";
 let dmManager = null;
-let isRegistering = false; // False = Login mode by default
+let isRegistering = false; 
 
 const debugBox = document.getElementById('debug-console');
 const inpMsg = document.getElementById('inp-message');
@@ -50,8 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
     // Set initial UI state
-    toggleAuthMode(); // Call once to set buttons/title correctly
-    toggleAuthMode(); // Call again to set default (LOGIN) state
+    toggleAuthMode(); 
+    toggleAuthMode(); // Call twice to set default (LOGIN) state
 });
 
 
@@ -74,7 +72,7 @@ function toggleAuthMode() {
 function handleAuthSubmit() {
     const user = inpUsername.value.trim();
     const pass = inpPassword.value.trim();
-    const ip = ipInput.value.trim(); // Reads from hidden input
+    const ip = ipInput.value.trim(); 
 
     if (!user || !pass) {
         alert("Username and Password are required.");
@@ -85,40 +83,42 @@ function handleAuthSubmit() {
         return;
     }
     
-    // Construct the packet expected by ClientWorker.java
     const authType = isRegistering ? "REGISTER" : "LOGIN";
     const authPacket = `AUTH:${authType}:${user}:${pass}`;
     
     debug(`Auth attempt (${authType}) to ${ip}`);
     
-    // Connect and send packet
-    client.connect(ip);
-    
-    // Wait for WebSocket open event before sending the auth string
-    setTimeout(() => {
+    // 1. Send connection request
+    // 2. The callback function executes ONLY upon successful connection (onopen)
+    client.connect(ip, () => {
+        debug("Sending Auth Packet...");
         client.send(authPacket);
-    }, 500); 
+    });
 }
 
 // --- NETWORK HANDLER ---
+// The connect method now needs a slight adjustment to accept the callback, 
+// but we will do this adjustment inside socketClient.js in the next step.
 
 const handleIncoming = (raw) => {
     debug("RX: " + raw);
 
-    if (raw.startsWith("AUTH_REQUIRED")) return; // Server is ready
+    if (raw.startsWith("AUTH_REQUIRED")) {
+        // This means the client needs to re-send auth if it fails to send it in the onopen event.
+        debug("Server requested Auth, but client should have sent it already.");
+        return; 
+    }
     
     if (raw.startsWith("AUTH_SUCCESS:")) {
         currentUser = raw.split(":")[1];
         debug(`Login Success as ${currentUser}. Switching UI.`);
         UI.toggleLogin(false);
-        
-        // Initialize DM Manager
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
         return;
     }
     
     if (raw === "AUTH_FAILED") { 
-        debug("CRITICAL: Authentication Failed (Invalid Credentials or Registration Failed).");
+        debug("CRITICAL: Authentication Failed (Check Hash or User Existence).");
         alert("Authentication failed. Please check credentials or ensure registration was successful."); 
         location.reload(); 
         return; 
@@ -133,7 +133,6 @@ const handleIncoming = (raw) => {
         const p = raw.split(":", 3);
         if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
     }
-    // HISTORY messages (DM:sender:content) are also handled by handleIncomingDM
 };
 
 const handleStatus = (act) => {
@@ -142,12 +141,11 @@ const handleStatus = (act) => {
     else debug("WebSocket Disconnected/Failed");
 };
 
-
+// Initialize client
 const client = new SocketClient(handleIncoming, handleStatus);
 
 
-// --- EMOJI & MESSAGE LOGIC ---
-
+// --- EMOJI & MESSAGE LOGIC (Simplified) ---
 const emojis = ["😀","😂","😍","🥺","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","🙌","✨","💩","🤡","💀","💪","🙏","👋","🌹","🍀"];
 const btnEmoji = document.getElementById('btn-emoji');
 

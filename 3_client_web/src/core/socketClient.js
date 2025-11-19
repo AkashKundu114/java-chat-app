@@ -7,17 +7,16 @@ export class SocketClient {
         this.onStatusChange = onStatusChange;
     }
 
-    connect(inputAddress) {
+    // Now accepts a postConnectCallback function
+    connect(inputAddress, postConnectCallback) {
         let url;
 
-        // 1. Check if it's a Secure Tunnel (Ngrok OR LocalTunnel)
+        // 1. Secure Tunnel Check
         if (inputAddress.includes("ngrok") || inputAddress.includes("loca.lt")) {
-            // Strip 'https://' if user pasted it
             const cleanUrl = inputAddress.replace(/^https?:\/\//, '');
-            // Force Secure WebSocket (WSS)
             url = `wss://${cleanUrl}`; 
         } else {
-            // 2. Local Network IP (e.g., 192.168.1.5)
+            // 2. Local Network IP
             url = `ws://${inputAddress}:${SETTINGS.BRIDGE_PORT}`;
         }
 
@@ -25,7 +24,14 @@ export class SocketClient {
 
         this.socket = new WebSocket(url);
 
-        this.socket.onopen = () => this.onStatusChange(true);
+        this.socket.onopen = () => {
+            this.onStatusChange(true);
+            
+            // CRITICAL: Execute the auth packet send function here
+            if (postConnectCallback) {
+                postConnectCallback();
+            }
+        };
         this.socket.onclose = () => this.onStatusChange(false);
         this.socket.onerror = (e) => {
             console.error("Socket Error:", e);
