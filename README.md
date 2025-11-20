@@ -95,7 +95,8 @@ mkdir -p bin
 
 Compile:
 ```bash
-javac -cp "lib/mongo-java-driver-3.12.14.jar;src" -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java```
+javac -cp "lib/mongo-java-driver-3.12.14.jar;src" -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java
+```
 
 Server:
 ```bash
