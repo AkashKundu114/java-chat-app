@@ -12,6 +12,7 @@ const ipInput = document.getElementById('inp-ip');
 const inpMsg = document.getElementById('inp-message');
 const btnEmoji = document.getElementById('btn-emoji');
 const emojiPicker = document.getElementById('emoji-picker');
+const mainChatPanel = document.getElementById('main-chat-panel'); // Added for global access
 
 let currentUser = "";
 let dmManager = null;
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            // Assuming the client object is accessible globally here
             client.disconnect();
             location.reload();
         });
@@ -160,6 +162,11 @@ const handleIncoming = (raw) => {
         UI.toggleLogin(false); 
         
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
+
+        // FIX: Force Chat Panel to Display on successful login
+        const chatPanel = document.getElementById('main-chat-panel');
+        if (chatPanel) chatPanel.classList.remove('hidden');
+
         return;
     }
     
