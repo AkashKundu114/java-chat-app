@@ -7,8 +7,8 @@ import { DMManager } from './managers/dmManager.js';
 // --- GLOBAL STATE ---
 let currentUser = null;
 let client = null;
-let dmManager = null;
-let isRegistering = false; // Tracks Login vs Register mode
+let dmManager = null; // Will be initialized after successful login
+let isRegistering = false; 
 
 const EMOJIS = ['🚀', '💻', '💡', '✅', '☕', '🔥', '⚙️', '🤖', '🔒', '🎉'];
 
@@ -24,28 +24,13 @@ function debug(msg) {
 
 // Automatically populate the hidden IP field when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Ensure the client side manager files are linked
     if (typeof lucide !== 'undefined') lucide.createIcons();
     
-    // Check for essential inputs
     const ipInput = document.getElementById('inp-ip');
-    const toggleBtn = document.getElementById('btn-toggle-mode');
     
     if (ipInput) {
         ipInput.value = SETTINGS.DEFAULT_IP;
         debug("UI Initialized. Default IP Set.");
-    }
-    
-    // Initialize DM Manager (required for app view setup)
-    dmManager = new DMManager(null, (packet) => client.send(packet));
-    
-    // Attach logout functionality explicitly
-    const logoutBtn = document.getElementById('logout-icon-small');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            if (client) client.disconnect();
-            location.reload(); 
-        });
     }
 });
 
@@ -55,7 +40,6 @@ const handleIncomingMessage = (rawText) => {
 
     if (rawText === "AUTH_REQUIRED") {
         debug("Server requested Auth. Sending credentials...");
-        // This is a placeholder. The actual auth send happens via the connect callback.
         return;
     }
     
@@ -63,10 +47,16 @@ const handleIncomingMessage = (rawText) => {
         currentUser = rawText.split(":")[1];
         debug(`Login SUCCESS as ${currentUser}. Initializing App View.`);
         
-        // CRITICAL FIX: Toggle UI and show chat panels
+        // CRITICAL FIX: 
+        // 1. Initialize DM Manager with the confirmed username
+        dmManager = new DMManager(currentUser, (packet) => client.send(packet));
+        
+        // 2. Toggle UI and show chat panels
         UI.toggleLogin(false);
         DOM.mainChatPanel.classList.remove('hidden'); 
-        DOM.chatHeaderName.innerText = currentUser; 
+        
+        // 3. Update initial display elements
+        DOM.chatHeaderName.innerText = currentUser;
         
         return;
     }
@@ -74,12 +64,12 @@ const handleIncomingMessage = (rawText) => {
     if (rawText === "AUTH_FAILED") { 
         debug("CRITICAL: Login Failed. Credentials rejected by DB.");
         DOM.loginTitle.innerText = "ACCESS DENIED";
-        DOM.btnSubmitAuth.disabled = false; // Re-enable button
+        DOM.btnSubmitAuth.disabled = false;
         alert("Login/Registration Failed. Check credentials or try REGISTER.");
         return; 
     }
 
-    if (!dmManager) return; // Should be impossible if login succeeded
+    if (!dmManager) return; // Should not happen after successful login
 
     // Handle incoming data packets
     if (rawText.startsWith("USERS:")) {
@@ -103,7 +93,7 @@ const handleStatus = (isConnected) => {
     }
 };
 
-// Client initialization outside event scope
+// Client initialization 
 client = new SocketClient(handleIncomingMessage, handleStatus);
 
 
