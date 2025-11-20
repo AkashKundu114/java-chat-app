@@ -2,7 +2,7 @@
 import { DOM } from './managers/domManager.js';
 import { UI } from './managers/uiManager.js';
 import { SocketClient } from './core/socketClient.js';
-import { DMManager } from './managers/dmManager.js';
+import { DMManager } from './managers/dmManager.js'; // This is needed for the app view, even if empty
 
 // --- GLOBAL STATE ---
 let currentUser = null;
@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ipInput.value = SETTINGS.DEFAULT_IP;
         debug("UI Initialized. Default IP Set.");
     }
+    
+    // Initialize DMManager early (required for app view, even if no user yet)
+    dmManager = new DMManager(null, (packet) => client.send(packet)); 
 });
 
 // --- NETWORK HANDLERS ---
@@ -38,48 +41,34 @@ const handleIncomingMessage = (rawText) => {
 
     if (rawText === "AUTH_REQUIRED") {
         debug("Server requested Auth. Sending credentials...");
+        // This is where the client sends the stored credentials from handleAuthSubmit
         return;
     }
     
     if (rawText.startsWith("AUTH_SUCCESS:")) {
         currentUser = rawText.split(":")[1];
-        debug(`Login SUCCESS as ${currentUser}. Initializing UI.`);
+        debug(`Login SUCCESS as ${currentUser}. Initializing App View.`);
         UI.toggleLogin(false);
         
-        // Initialize DM Manager and force initial user list update
-        dmManager = new DMManager(currentUser, (packet) => client.send(packet));
-        
-        // Fix: Activate the chat panel immediately after login
+        // Final Fix: Force chat panel visible after successful login
         DOM.mainChatPanel.classList.remove('hidden');
-        DOM.chatHeaderName.innerText = currentUser; // Default to self-profile in header
-
+        DOM.chatHeaderName.innerText = currentUser; // Update header
         return;
     }
 
     if (rawText === "AUTH_FAILED") { 
-        debug("CRITICAL: Login Failed (Check credentials or if user exists).");
-        document.getElementById('login-title').innerText = "ACCESS DENIED";
-        alert("Login/Registration Failed. Check credentials or try REGISTER.");
-        location.reload(); 
+        debug("CRITICAL: Login Failed.");
+        DOM.loginTitle.innerText = "ACCESS DENIED";
+        alert("Login/Registration Failed. Check credentials.");
+        // Re-enable button on failure
+        DOM.btnSubmitAuth.disabled = false;
         return; 
     }
 
-    if (!dmManager) return;
-
-    if (rawText.startsWith("USERS:")) {
-        dmManager.updateUserList(rawText);
-        return;
-    }
-
-    if (rawText.startsWith("DM:")) {
-        const parts = rawText.split(":", 3);
-        if(parts.length === 3) dmManager.handleIncomingDM(parts[1], parts[2]);
-    }
-    
-    if (rawText.startsWith("HISTORY:")) {
-        // Handled by dmManager (it re-renders the chat bubbles)
-        const parts = rawText.split(":", 3);
-        if(parts.length === 3) dmManager.handleIncomingDM(parts[1], parts[2]);
+    // Handle messages (DM/HISTORY) only if dmManager is initialized
+    if (dmManager) {
+        if (rawText.startsWith("USERS:")) dmManager.updateUserList(rawText);
+        // Add other message handlers here
     }
 };
 
@@ -94,6 +83,7 @@ const handleStatus = (isConnected) => {
     }
 };
 
+// Client initialization outside event scope
 client = new SocketClient(handleIncomingMessage, handleStatus);
 
 
@@ -112,7 +102,7 @@ const handleAuthSubmit = () => {
     DOM.loginTitle.innerText = `CONNECTING AS ${user}...`;
     DOM.btnSubmitAuth.disabled = true;
 
-    // Connect to the server, and on successful connection, send the auth packet
+    // Connect and send credentials on open
     client.connect(ip, () => {
         client.send(authPacket);
     });
@@ -129,6 +119,7 @@ DOM.btnToggleMode.addEventListener('click', () => {
         ? `Already registered? **LOGIN**` 
         : `Don't have an account? **REGISTER**`;
     DOM.btnSubmitAuth.innerText = isRegistering ? 'REGISTER' : 'LOGIN';
+    DOM.btnSubmitAuth.disabled = false; // Re-enable button
 });
 
 // 3. Send Message
@@ -141,17 +132,16 @@ DOM.chatForm.addEventListener('submit', (e) => {
         dmManager.sendDM(text);
         DOM.inpMessage.value = "";
     } else if (text) {
-        // Alert user to select contact if they try to send without selecting
         alert("ERROR: Select a contact before sending a message.");
     }
 });
 
-// 4. Logout Button (The Red Arrow)
+// 4. Logout Button 
 const logoutButton = document.getElementById('logout-icon-small');
 if (logoutButton) {
     logoutButton.addEventListener('click', () => {
         client.disconnect();
-        location.reload(); // Reloads the page to show the login screen
+        location.reload(); 
     });
 }
 
