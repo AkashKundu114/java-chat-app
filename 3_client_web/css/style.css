@@ -96,7 +96,7 @@ body {
     justify-content: space-between;
 }
 .company-header {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--accent-primary);
     text-align: center;
@@ -116,7 +116,7 @@ body {
 }
 .nav-icon.active { background: var(--bg-dark); color: var(--accent-primary); border-color: var(--accent-primary); }
 .nav-icon:not(.active):hover { color: var(--accent-primary); border-color: var(--border-strong); }
-.nav-icon.logout { margin-top: 20px; color: #ff0000; } 
+.nav-icon.logout { margin-top: 20px; color: var(--error-red); } 
 
 
 .contact-panel {
@@ -166,7 +166,7 @@ body {
     color: var(--accent-dark);
 }
 .chat-header-name { font-weight: 700; color: var(--accent-dark); }
-.chat-header-status { font-size: 0.8rem; color: #00ff00; } 
+.chat-header-status { font-size: 0.8rem; color: var(--online-green); } 
 
 
 .chat-messages {
@@ -201,14 +201,15 @@ body {
 }
 .msg-time { color: var(--text-secondary); font-size: 0.65rem; opacity: 1; }
 
-/* Input Footer (Now active) */
+/* Input Footer (Fix: Ensure inputs are visible and wide) */
 .chat-input-container {
     padding: 10px 15px;
     border-top: 2px solid var(--accent-primary);
     display: flex;
     align-items: center;
     background-color: var(--panel-bg);
-    flex-shrink: 0;
+    flex-shrink: 0; /* Important: Prevents area from being crushed */
+    gap: 8px; /* Added spacing */
 }
 
 /* Fix Input Size and remove excess margins */
@@ -217,7 +218,7 @@ body {
     padding: 10px 15px;
     border: 2px solid var(--border-strong);
     border-radius: 0;
-    margin: 0 8px; /* Reduced margin to maximize space */
+    margin: 0; /* Removed margin conflicts */
     font-size: 1rem;
     background-color: var(--bg-dark);
     color: var(--text-color);
@@ -238,7 +239,7 @@ body {
     box-shadow: 2px 2px 0 var(--border-strong);
     border-radius: 0;
     transition: all 0.1s;
-    width: 38px; /* Fixed width for icon buttons */
+    width: 38px;
     height: 38px;
 }
 .input-action-btn:hover { color: var(--accent-primary); border-color: var(--accent-primary); }

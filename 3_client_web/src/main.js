@@ -1,346 +1,179 @@
-﻿import { SocketClient } from './core/socketClient.js';
-import { SETTINGS } from './config/settings.js'; 
+﻿import { SETTINGS } from './config/settings.js';
+import { DOM } from './managers/domManager.js';
+import { UI } from './managers/uiManager.js';
+import { SocketClient } from './core/socketClient.js';
+import { DMManager } from './managers/dmManager.js';
 
-lucide.createIcons();
-
-const loginTitle = document.getElementById('login-title');
-const btnSubmitAuth = document.getElementById('btn-submit-auth');
-const btnToggleMode = document.getElementById('btn-toggle-mode');
-const inpUsername = document.getElementById('inp-username');
-const inpPassword = document.getElementById('inp-password');
-const ipInput = document.getElementById('inp-ip'); 
-const inpMsg = document.getElementById('inp-message');
-const btnEmoji = document.getElementById('btn-emoji');
-const emojiPicker = document.getElementById('emoji-picker');
-const mainChatPanel = document.getElementById('main-chat-panel'); // Added for global access
-
-let currentUser = "";
+// --- GLOBAL STATE ---
+let currentUser = null;
+let client = null;
 let dmManager = null;
-let isRegistering = false; 
+let isRegistering = false; // Tracks Login vs Register mode
 
+const EMOJIS = ['🚀', '💻', '💡', '✅', '☕', '🔥', '⚙️', '🤖', '🔒', '🎉'];
+
+// --- DEBUG/INIT FUNCTIONS ---
 const debugBox = document.getElementById('debug-console');
-
 function debug(msg) {
-    const time = new Date().toLocaleTimeString().split(' ')[0];
-    if(debugBox) debugBox.innerHTML += `<div>> [${time}] ${msg}</div>`;
-    if(debugBox) debugBox.scrollTop = debugBox.scrollHeight;
-    console.log(msg);
+    if (debugBox) {
+        const time = new Date().toLocaleTimeString().split(' ')[0];
+        debugBox.innerHTML += `<div>[${time}] ${msg}</div>`;
+        debugBox.scrollTop = debugBox.scrollHeight;
+    }
 }
 
+// Automatically populate the hidden IP field when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    debug("SYSTEM READY: Waiting for connection.");
-    
-    if (ipInput && SETTINGS.DEFAULT_IP) {
+    lucide.createIcons();
+    const ipInput = document.getElementById('inp-ip');
+    if (ipInput) {
         ipInput.value = SETTINGS.DEFAULT_IP;
-        debug("CONFIG: Tunnel IP set to " + SETTINGS.DEFAULT_IP);
+        debug("UI Initialized. Default IP Set.");
     }
-
-    btnSubmitAuth.addEventListener('click', handleAuthSubmit);
-    btnToggleMode.addEventListener('click', toggleAuthMode);
-    
-    // LOGOUT FIX
-    const logoutBtn = document.getElementById('logout-icon-small');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Assuming the client object is accessible globally here
-            client.disconnect();
-            location.reload();
-        });
-    }
-
-    // ATTACHMENT/PHOTO LOGIC
-    const btnAttach = document.getElementById('btn-attach');
-    const inpFileUpload = document.getElementById('inp-file-upload');
-    if (btnAttach && inpFileUpload) {
-        btnAttach.addEventListener('click', () => {
-            inpFileUpload.click();
-        });
-        inpFileUpload.addEventListener('change', () => {
-            debug("FILE: Image selected (Upload not implemented).");
-            if (dmManager && inpFileUpload.files.length > 0) {
-                 dmManager.sendDM(`(Attachment: ${inpFileUpload.files[0].name})`);
-            }
-            inpFileUpload.value = '';
-        });
-    }
-
-    initEmojiPicker();
-    
-    toggleAuthMode(false);
 });
 
+// --- NETWORK HANDLERS ---
+const handleIncomingMessage = (rawText) => {
+    debug("RX: " + rawText);
 
-function toggleAuthMode(eventOrBool) {
-    if (typeof eventOrBool === 'boolean') {
-        isRegistering = eventOrBool;
-    } else {
-        isRegistering = !isRegistering;
-    }
-    
-    if (isRegistering) {
-        loginTitle.innerText = "CREATE NEW ACCOUNT";
-        btnSubmitAuth.innerHTML = '<i data-lucide="user-plus" style="width:20px;"></i> REGISTER';
-        btnToggleMode.innerHTML = 'Already registered? **LOGIN**';
-    } else {
-        loginTitle.innerText = "SECURE LOGIN";
-        btnSubmitAuth.innerHTML = '<i data-lucide="log-in" style="width:20px;"></i> LOGIN';
-        btnToggleMode.innerHTML = 'Don\'t have an account? **REGISTER**';
-    }
-    lucide.createIcons();
-}
-
-function handleAuthSubmit() {
-    const user = inpUsername.value.trim();
-    const pass = inpPassword.value.trim();
-    const ip = ipInput.value.trim(); 
-
-    if (!user || !pass) {
-        debug("ERROR: Missing credentials.");
+    if (rawText === "AUTH_REQUIRED") {
+        debug("Server requested Auth. Sending credentials...");
         return;
     }
     
-    if (!ip || ip.includes("your-subdomain")) {
-        debug("CRITICAL ERROR: Tunnel IP not set.");
-        alert("CRITICAL: Please set the correct LocalTunnel/Ngrok URL in settings.js.");
-        return;
-    }
-    
-    const authType = isRegistering ? "REGISTER" : "LOGIN";
-    const authPacket = `AUTH:${authType}:${user}:${pass}`;
-    
-    debug(`AUTH: Attempting ${authType} to ${ip}`);
-    
-    client.connect(ip, () => {
-        debug("SEND: Auth Packet.");
-        client.send(authPacket);
-    });
-}
-
-const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
-
-function initEmojiPicker() {
-    if (!emojiPicker) return;
-
-    emojis.forEach(em => {
-        const s = document.createElement('span');
-        s.className = 'emoji-btn';
-        s.innerText = em;
-        s.onclick = (e) => {
-            e.preventDefault();
-            if (inpMsg) inpMsg.value += em;
-            if (emojiPicker) emojiPicker.classList.add('hidden');
-        };
-        emojiPicker.appendChild(s);
-    });
-    
-    if (btnEmoji) {
-        btnEmoji.addEventListener('click', (e) => {
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            if (emojiPicker) emojiPicker.classList.toggle('hidden');
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== btnEmoji) {
-            emojiPicker.classList.add('hidden');
-        }
-    });
-}
-
-
-const handleIncoming = (raw) => {
-    debug("RX: " + raw);
-
-    if (raw.startsWith("AUTH_REQUIRED")) return; 
-    
-    if (raw.startsWith("AUTH_SUCCESS:")) {
-        currentUser = raw.split(":")[1];
-        debug(`SUCCESS: Logged in as ${currentUser}.`);
+    if (rawText.startsWith("AUTH_SUCCESS:")) {
+        currentUser = rawText.split(":")[1];
+        debug(`Login SUCCESS as ${currentUser}. Initializing UI.`);
+        UI.toggleLogin(false);
         
-        UI.toggleLogin(false); 
-        
+        // Initialize DM Manager and force initial user list update
         dmManager = new DMManager(currentUser, (packet) => client.send(packet));
-
-        // FIX: Force Chat Panel to Display on successful login
-        const chatPanel = document.getElementById('main-chat-panel');
-        if (chatPanel) chatPanel.classList.remove('hidden');
+        
+        // Fix: Activate the chat panel immediately after login
+        DOM.mainChatPanel.classList.remove('hidden');
+        DOM.chatHeaderName.innerText = currentUser; // Default to self-profile in header
 
         return;
     }
-    
-    if (raw === "AUTH_FAILED") { 
-        debug("ERROR: Authentication Failed.");
-        alert("Authentication failed. Check credentials or register a new user."); 
-        UI.toggleLogin(true);
+
+    if (rawText === "AUTH_FAILED") { 
+        debug("CRITICAL: Login Failed (Check credentials or if user exists).");
+        document.getElementById('login-title').innerText = "ACCESS DENIED";
+        alert("Login/Registration Failed. Check credentials or try REGISTER.");
+        location.reload(); 
         return; 
     }
 
     if (!dmManager) return;
-    
-    if (raw.startsWith("USERS:")) dmManager.updateUserList(raw);
-    
-    if (raw.startsWith("DM:")) {
-        const p = raw.split(":", 3);
-        if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
+
+    if (rawText.startsWith("USERS:")) {
+        dmManager.updateUserList(rawText);
+        return;
     }
 
-    if (raw.startsWith("DM:") && raw.includes("Attachment:")) {
-        const p = raw.split(":", 3);
-        if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
+    if (rawText.startsWith("DM:")) {
+        const parts = rawText.split(":", 3);
+        if(parts.length === 3) dmManager.handleIncomingDM(parts[1], parts[2]);
+    }
+    
+    if (rawText.startsWith("HISTORY:")) {
+        // Handled by dmManager (it re-renders the chat bubbles)
+        const parts = rawText.split(":", 3);
+        if(parts.length === 3) dmManager.handleIncomingDM(parts[1], parts[2]);
     }
 };
 
-const handleStatus = (act) => {
-    const loginLayer = document.getElementById('layer-login');
-    if (loginLayer && act) loginLayer.classList.add('hidden');
-    
-    UI.setStatus(act);
-    if(act) debug("WebSocket Connected!");
+const handleStatus = (isConnected) => {
+    UI.setStatus(isConnected);
+    if(isConnected) debug("WebSocket Connected!");
     else debug("WebSocket Disconnected/Failed");
+    
+    if (!isConnected && currentUser) {
+        // Only reload if user was previously logged in
+        setTimeout(() => location.reload(), 2000);
+    }
 };
 
+client = new SocketClient(handleIncomingMessage, handleStatus);
 
-const client = new SocketClient(handleIncoming, handleStatus);
 
+// --- UI EVENT HANDLERS ---
 
-class DMManager {
-    constructor(currentUser, onSendMessage) {
-        this.currentUser = currentUser;
-        this.onSendMessage = onSendMessage;
-        this.activeChatUser = null; 
-        this.users = []; 
+const handleAuthSubmit = () => {
+    const user = DOM.inpUsername.value.trim();
+    const pass = DOM.inpPassword.value.trim();
+    const ip = DOM.inpIp.value.trim(); // Reads the hidden field value
 
-        const backBtn = document.getElementById('btn-back-contact');
-        if(backBtn) backBtn.addEventListener('click', () => this.toggleMobileView('list'));
-        
-        const userHeader = document.getElementById('chat-header-name');
-        if(userHeader) userHeader.innerText = currentUser;
-        
-        const avatar = document.getElementById('chat-header-avatar');
-        if(avatar) avatar.innerText = currentUser.charAt(0).toUpperCase();
+    if (!user || !pass) { alert("Username and Password required."); return; }
 
-        const avatarSmall = document.querySelector('.nav-icon.active .avatar-small');
-        if(avatarSmall) avatarSmall.innerText = currentUser.charAt(0).toUpperCase();
+    const authType = isRegistering ? "REGISTER" : "LOGIN";
+    const authPacket = `AUTH:${authType}:${user}:${pass}`;
 
-        if (document.getElementById('form-chat')) {
-            document.getElementById('form-chat').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const txt = inpMsg.value.trim();
-                if(txt && this.activeChatUser) {
-                    this.sendDM(txt);
-                    inpMsg.value = "";
-                }
-            });
-        }
+    DOM.loginTitle.innerText = `CONNECTING AS ${user}...`;
+    DOM.btnSubmitAuth.disabled = true;
+
+    // Connect to the server, and on successful connection, send the auth packet
+    client.connect(ip, () => {
+        client.send(authPacket);
+    });
+};
+
+// 1. Login/Register Button
+DOM.btnSubmitAuth.addEventListener('click', handleAuthSubmit);
+
+// 2. Toggle Login/Register Mode
+DOM.btnToggleMode.addEventListener('click', () => {
+    isRegistering = !isRegistering;
+    DOM.loginTitle.innerText = isRegistering ? "REGISTER NEW USER" : "SECURE LOGIN";
+    DOM.btnToggleMode.innerHTML = isRegistering 
+        ? `Already registered? **LOGIN**` 
+        : `Don't have an account? **REGISTER**`;
+    DOM.btnSubmitAuth.innerText = isRegistering ? 'REGISTER' : 'LOGIN';
+});
+
+// 3. Send Message
+DOM.chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = DOM.inpMessage.value.trim();
+    
+    if (text && dmManager && dmManager.activeChatUser) {
+        // Send DM using the DM Manager logic
+        dmManager.sendDM(text);
+        DOM.inpMessage.value = "";
+    } else if (text) {
+        // Alert user to select contact if they try to send without selecting
+        alert("ERROR: Select a contact before sending a message.");
     }
+});
 
-    updateUserList(rawString) {
-        const listPart = rawString.substring(6);
-        if (!listPart) return;
-        this.users = listPart.split(',').map(u => {
-            const match = u.match(/(.*)\((.*)\)/);
-            if(match) return { name: match[1], status: match[2] };
-            return { name: u, status: 'Offline' };
-        }).filter(u => u.name !== this.currentUser);
-
-        this.renderSidebar();
-    }
-
-    renderSidebar() {
-        const sidebarList = document.getElementById('sidebar-list');
-        if (!sidebarList) return;
-
-        sidebarList.innerHTML = "";
-        this.users.forEach(u => {
-            const isActive = this.activeChatUser === u.name;
-            const div = document.createElement('div');
-            
-            div.className = `contact-item ${isActive ? 'active' : ''}`;
-            div.innerHTML = `
-                <div style="display: flex; align-items: center; min-width: 0;">
-                    <div class="avatar-small">${u.name.charAt(0).toUpperCase()}</div>
-                    <div class="contact-info">
-                        <span class="contact-name">${u.name}</span>
-                        <span class="last-message">${u.status}</span>
-                    </div>
-                </div>
-                <div style="width: 8px; height: 8px; border-radius: 0; background-color: ${u.status === 'Online' ? 'var(--online-green)' : 'var(--text-secondary)'}; box-shadow: 1px 1px 0 black;"></div>
-            `;
-            
-            div.onclick = () => {
-                this.openChat(u.name);
-            };
-            sidebarList.appendChild(div);
-        });
-    }
-
-    openChat(username) {
-        this.activeChatUser = username;
-        
-        const headerName = document.getElementById('chat-header-name');
-        const headerAvatar = document.getElementById('chat-header-avatar');
-        
-        if (headerName) headerName.innerText = username;
-        if (headerAvatar) headerAvatar.innerText = username.charAt(0).toUpperCase();
-
-        document.getElementById('chat-area').innerHTML = ""; 
-        
-        this.toggleMobileView('chat');
-        this.renderSidebar(); 
-        
-        this.onSendMessage(`HISTORY:${username}`);
-    }
-
-    toggleMobileView(view) {
-        const sidebar = document.getElementById('sidebar-panel');
-        const chatPanel = document.getElementById('main-chat-panel');
-
-        if (window.innerWidth < 768) {
-            if (view === 'chat') {
-                sidebar.classList.add('hidden');
-                chatPanel.classList.remove('hidden');
-            } else {
-                sidebar.classList.remove('hidden');
-                chatPanel.classList.add('hidden');
-            }
-        }
-    }
-
-    handleIncomingDM(sender, text) {
-        const relevant = (sender === this.activeChatUser) || (sender === this.currentUser && this.activeChatUser);
-        
-        if (relevant) {
-            const isMe = (sender === this.currentUser);
-            this.renderMessageBubble({ text: text, isMe: isMe });
-        }
-    }
-
-    sendDM(text) {
-        if (!this.activeChatUser) return;
-        this.renderMessageBubble({ text: text, isMe: true });
-        this.onSendMessage(`TO:${this.activeChatUser}:${text}`);
-    }
-
-    renderMessageBubble(msg) {
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const isMe = msg.isMe;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = `msg-wrapper ${isMe ? 'right' : 'left'}`;
-        
-        const bubble = document.createElement('div');
-        bubble.className = `msg ${isMe ? 'msg-me' : 'msg-other'}`;
-        
-        bubble.innerHTML = `
-            ${msg.text}
-            <span class="msg-time">${time}</span>
-        `;
-        
-        document.getElementById('chat-area').appendChild(wrapper);
-        wrapper.appendChild(bubble);
-        
-        document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
-    }
+// 4. Logout Button (The Red Arrow)
+const logoutButton = document.getElementById('logout-icon-small');
+if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+        client.disconnect();
+        location.reload(); // Reloads the page to show the login screen
+    });
 }
+
+
+// 5. Emoji Picker Logic
+const emojiPicker = document.getElementById('emoji-picker');
+EMOJIS.forEach(emoji => {
+    const btn = document.createElement('span');
+    btn.className = 'emoji-btn';
+    btn.textContent = emoji;
+    btn.onclick = () => {
+        DOM.inpMessage.value += emoji;
+        emojiPicker.classList.add('hidden');
+    };
+    emojiPicker.appendChild(btn);
+});
+
+DOM.btnEmoji.addEventListener('click', () => {
+    emojiPicker.classList.toggle('hidden');
+});
+
+// 6. Attachment Button (Placeholder Functionality)
+DOM.btnAttach.addEventListener('click', () => {
+    debug("Attachment initiated. (Functionality is currently placeholder)");
+});

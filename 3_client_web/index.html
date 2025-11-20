@@ -11,7 +11,7 @@
 
     <div id="layer-login">
         <div class="login-card">
-            <h2 class="login-title" id="login-title">JOHNNY WALKER CO.</h2>
+            <h2 class="login-title" id="login-title">JOHNNY WALKER</h2>
             
             <div id="debug-console" style="font-family:monospace; font-size:10px; color:var(--accent-primary); background:var(--bg-dark); padding:5px; margin-bottom:10px; height:40px; overflow:hidden; border:2px solid var(--border-strong);">> READY</div>
             
@@ -76,15 +76,20 @@
                 </div>
             </div>
 
+            <!-- CHAT INPUT FORM: FIXED AND WIDE -->
             <form id="form-chat" class="chat-input-container">
                 <input type="file" id="inp-file-upload" class="hidden" accept="image/*">
                 
+                <!-- ATTACHMENT ICON -->
                 <button type="button" id="btn-attach" class="input-action-btn"><i data-lucide="paperclip"></i></button>
                 
+                <!-- TYPING AREA: THIS IS YOUR TEXT BOX -->
                 <input id="inp-message" type="text" placeholder="ENTER MESSAGE / COMMAND..." class="message-input">
                 
+                <!-- EMOJI ICON -->
                 <button type="button" id="btn-emoji" class="input-action-btn"><i data-lucide="smile"></i></button>
                 
+                <!-- SEND ICON -->
                 <button type="submit" class="input-action-btn send-btn"><i data-lucide="send"></i></button>
             </form>
 
