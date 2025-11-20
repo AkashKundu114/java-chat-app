@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSubmitAuth.addEventListener('click', handleAuthSubmit);
     btnToggleMode.addEventListener('click', toggleAuthMode);
     
+    // LOGOUT FIX
     const logoutBtn = document.getElementById('logout-icon-small');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ATTACHMENT/PHOTO LOGIC
     const btnAttach = document.getElementById('btn-attach');
     const inpFileUpload = document.getElementById('inp-file-upload');
     if (btnAttach && inpFileUpload) {

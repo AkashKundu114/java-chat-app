@@ -77,7 +77,6 @@ body {
     position: relative;
     max-width: none; 
     
-    /* CRITICAL FIX: Ensure the grid display is always set for the container */
     display: grid !important; 
     grid-template-columns: 60px 250px 1fr;
     
@@ -97,7 +96,7 @@ body {
     justify-content: space-between;
 }
 .company-header {
-    font-size: 0.8rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--accent-primary);
     text-align: center;
@@ -211,12 +210,14 @@ body {
     background-color: var(--panel-bg);
     flex-shrink: 0;
 }
+
+/* Fix Input Size and remove excess margins */
 .message-input {
     flex-grow: 1;
     padding: 10px 15px;
     border: 2px solid var(--border-strong);
     border-radius: 0;
-    margin: 0 5px;
+    margin: 0 8px; /* Reduced margin to maximize space */
     font-size: 1rem;
     background-color: var(--bg-dark);
     color: var(--text-color);
@@ -237,6 +238,8 @@ body {
     box-shadow: 2px 2px 0 var(--border-strong);
     border-radius: 0;
     transition: all 0.1s;
+    width: 38px; /* Fixed width for icon buttons */
+    height: 38px;
 }
 .input-action-btn:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
 .send-btn { 
@@ -273,7 +276,6 @@ body {
 /* --- RESPONSIVENESS (Full Screen Fit) --- */
 @media (min-width: 768px) {
     .app-container {
-        /* Desktop: Fills full screen on large monitors */
         grid-template-columns: 60px 250px 1fr !important;
         width: 100vw !important;
         height: 100vh !important;
@@ -284,7 +286,6 @@ body {
 
 @media (max-width: 767px) {
     .app-container {
-        /* Mobile: Ensure it is full screen with no side margins */
         grid-template-columns: 1fr !important;
         width: 100vw;
         height: 100vh;
