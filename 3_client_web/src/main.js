@@ -2,7 +2,7 @@
 import { DOM } from './managers/domManager.js';
 import { UI } from './managers/uiManager.js';
 import { SocketClient } from './core/socketClient.js';
-import { DMManager } from './managers/dmManager.js'; // This is needed for the app view, even if empty
+import { DMManager } from './managers/dmManager.js';
 
 // --- GLOBAL STATE ---
 let currentUser = null;
@@ -24,15 +24,29 @@ function debug(msg) {
 
 // Automatically populate the hidden IP field when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
+    // Ensure the client side manager files are linked
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    // Check for essential inputs
     const ipInput = document.getElementById('inp-ip');
+    const toggleBtn = document.getElementById('btn-toggle-mode');
+    
     if (ipInput) {
         ipInput.value = SETTINGS.DEFAULT_IP;
         debug("UI Initialized. Default IP Set.");
     }
     
-    // Initialize DMManager early (required for app view, even if no user yet)
-    dmManager = new DMManager(null, (packet) => client.send(packet)); 
+    // Initialize DM Manager (required for app view setup)
+    dmManager = new DMManager(null, (packet) => client.send(packet));
+    
+    // Attach logout functionality explicitly
+    const logoutBtn = document.getElementById('logout-icon-small');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (client) client.disconnect();
+            location.reload(); 
+        });
+    }
 });
 
 // --- NETWORK HANDLERS ---
@@ -41,34 +55,41 @@ const handleIncomingMessage = (rawText) => {
 
     if (rawText === "AUTH_REQUIRED") {
         debug("Server requested Auth. Sending credentials...");
-        // This is where the client sends the stored credentials from handleAuthSubmit
+        // This is a placeholder. The actual auth send happens via the connect callback.
         return;
     }
     
     if (rawText.startsWith("AUTH_SUCCESS:")) {
         currentUser = rawText.split(":")[1];
         debug(`Login SUCCESS as ${currentUser}. Initializing App View.`);
-        UI.toggleLogin(false);
         
-        // Final Fix: Force chat panel visible after successful login
-        DOM.mainChatPanel.classList.remove('hidden');
-        DOM.chatHeaderName.innerText = currentUser; // Update header
+        // CRITICAL FIX: Toggle UI and show chat panels
+        UI.toggleLogin(false);
+        DOM.mainChatPanel.classList.remove('hidden'); 
+        DOM.chatHeaderName.innerText = currentUser; 
+        
         return;
     }
 
     if (rawText === "AUTH_FAILED") { 
-        debug("CRITICAL: Login Failed.");
+        debug("CRITICAL: Login Failed. Credentials rejected by DB.");
         DOM.loginTitle.innerText = "ACCESS DENIED";
-        alert("Login/Registration Failed. Check credentials.");
-        // Re-enable button on failure
-        DOM.btnSubmitAuth.disabled = false;
+        DOM.btnSubmitAuth.disabled = false; // Re-enable button
+        alert("Login/Registration Failed. Check credentials or try REGISTER.");
         return; 
     }
 
-    // Handle messages (DM/HISTORY) only if dmManager is initialized
-    if (dmManager) {
-        if (rawText.startsWith("USERS:")) dmManager.updateUserList(rawText);
-        // Add other message handlers here
+    if (!dmManager) return; // Should be impossible if login succeeded
+
+    // Handle incoming data packets
+    if (rawText.startsWith("USERS:")) {
+        dmManager.updateUserList(rawText);
+        return;
+    }
+
+    if (rawText.startsWith("DM:") || rawText.startsWith("HISTORY:")) {
+        const parts = rawText.split(":", 3);
+        if(parts.length >= 3) dmManager.handleIncomingDM(parts[1], parts[2]);
     }
 };
 
@@ -78,7 +99,6 @@ const handleStatus = (isConnected) => {
     else debug("WebSocket Disconnected/Failed");
     
     if (!isConnected && currentUser) {
-        // Only reload if user was previously logged in
         setTimeout(() => location.reload(), 2000);
     }
 };
@@ -92,9 +112,11 @@ client = new SocketClient(handleIncomingMessage, handleStatus);
 const handleAuthSubmit = () => {
     const user = DOM.inpUsername.value.trim();
     const pass = DOM.inpPassword.value.trim();
-    const ip = DOM.inpIp.value.trim(); // Reads the hidden field value
+    const ip = DOM.inpIp.value.trim(); 
 
     if (!user || !pass) { alert("Username and Password required."); return; }
+    if (!ip) { alert("Bridge IP is required."); return; }
+
 
     const authType = isRegistering ? "REGISTER" : "LOGIN";
     const authPacket = `AUTH:${authType}:${user}:${pass}`;
@@ -102,7 +124,7 @@ const handleAuthSubmit = () => {
     DOM.loginTitle.innerText = `CONNECTING AS ${user}...`;
     DOM.btnSubmitAuth.disabled = true;
 
-    // Connect and send credentials on open
+    // Connect and send credentials on successful open
     client.connect(ip, () => {
         client.send(authPacket);
     });
@@ -119,7 +141,7 @@ DOM.btnToggleMode.addEventListener('click', () => {
         ? `Already registered? **LOGIN**` 
         : `Don't have an account? **REGISTER**`;
     DOM.btnSubmitAuth.innerText = isRegistering ? 'REGISTER' : 'LOGIN';
-    DOM.btnSubmitAuth.disabled = false; // Re-enable button
+    DOM.btnSubmitAuth.disabled = false; 
 });
 
 // 3. Send Message
@@ -128,7 +150,6 @@ DOM.chatForm.addEventListener('submit', (e) => {
     const text = DOM.inpMessage.value.trim();
     
     if (text && dmManager && dmManager.activeChatUser) {
-        // Send DM using the DM Manager logic
         dmManager.sendDM(text);
         DOM.inpMessage.value = "";
     } else if (text) {
@@ -136,17 +157,7 @@ DOM.chatForm.addEventListener('submit', (e) => {
     }
 });
 
-// 4. Logout Button 
-const logoutButton = document.getElementById('logout-icon-small');
-if (logoutButton) {
-    logoutButton.addEventListener('click', () => {
-        client.disconnect();
-        location.reload(); 
-    });
-}
-
-
-// 5. Emoji Picker Logic
+// 4. Emoji Picker Logic
 const emojiPicker = document.getElementById('emoji-picker');
 EMOJIS.forEach(emoji => {
     const btn = document.createElement('span');
@@ -163,7 +174,7 @@ DOM.btnEmoji.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
 });
 
-// 6. Attachment Button (Placeholder Functionality)
+// 5. Attachment Button (Placeholder Functionality)
 DOM.btnAttach.addEventListener('click', () => {
-    debug("Attachment initiated. (Functionality is currently placeholder)");
+    alert("Attachment initiated. (Functionality is currently placeholder)");
 });
