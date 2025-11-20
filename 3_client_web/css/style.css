@@ -14,12 +14,11 @@ body {
     margin: 0;
     font-family: 'Courier New', Courier, monospace; 
     background-color: var(--bg-dark);
-    /* Make body take full viewport height */
     height: 100vh;
     width: 100vw;
     color: var(--text-color);
     overflow: hidden; 
-    display: flex; /* Added flex to center app container */
+    display: flex;
     justify-content: center;
     align-items: center;
 }
@@ -32,7 +31,7 @@ body {
 /* --- LOGIN/REGISTER LAYOUT --- */
 #layer-login {
     display: flex; justify-content: center; align-items: center; height: 100vh; width: 100%;
-    position: absolute; /* Allows it to cover the entire viewport */
+    position: absolute;
     background-color: var(--bg-dark);
     z-index: 99;
 }
@@ -71,22 +70,21 @@ body {
 .btn-secondary:hover { background-color: var(--border-strong); color: var(--accent-primary); }
 
 
-/* --- MAIN APP LAYOUT (Full Screen Fix) --- */
+/* --- MAIN APP LAYOUT (Fix: Forced Display) --- */
 .app-container {
-    /* Changed to 100% to fill the window */
     width: 100vw;
     height: 100vh;
-    
-    /* Removed translate/position fixed */
     position: relative;
     max-width: none; 
     
-    display: grid;
+    /* CRITICAL FIX: Ensure the grid display is always set for the container */
+    display: grid !important; 
     grid-template-columns: 60px 250px 1fr;
+    
     background-color: var(--panel-bg);
     border-radius: 0;
     overflow: hidden;
-    border: none; /* Removed the outer border to fit screen edges */
+    border: none;
 }
 
 .nav-panel {
@@ -276,6 +274,7 @@ body {
 @media (min-width: 768px) {
     .app-container {
         /* Desktop: Fills full screen on large monitors */
+        grid-template-columns: 60px 250px 1fr !important;
         width: 100vw !important;
         height: 100vh !important;
         position: relative;

@@ -206,12 +206,12 @@ class DMManager {
         const backBtn = document.getElementById('btn-back-contact');
         if(backBtn) backBtn.addEventListener('click', () => this.toggleMobileView('list'));
         
-        const userHeader = document.getElementById('user-profile-name');
+        const userHeader = document.getElementById('chat-header-name');
         if(userHeader) userHeader.innerText = currentUser;
         
-        const avatar = document.getElementById('user-profile-avatar');
+        const avatar = document.getElementById('chat-header-avatar');
         if(avatar) avatar.innerText = currentUser.charAt(0).toUpperCase();
-        
+
         const avatarSmall = document.querySelector('.nav-icon.active .avatar-small');
         if(avatarSmall) avatarSmall.innerText = currentUser.charAt(0).toUpperCase();
 
