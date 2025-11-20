@@ -1,11 +1,8 @@
-﻿import { DOM } from './managers/domManager.js';
-import { UI } from './managers/uiManager.js';
-import { SocketClient } from './core/socketClient.js';
+﻿import { SocketClient } from './core/socketClient.js';
 import { SETTINGS } from './config/settings.js'; 
 
 lucide.createIcons();
 
-// --- UI Elements ---
 const loginTitle = document.getElementById('login-title');
 const btnSubmitAuth = document.getElementById('btn-submit-auth');
 const btnToggleMode = document.getElementById('btn-toggle-mode');
@@ -16,14 +13,12 @@ const inpMsg = document.getElementById('inp-message');
 const btnEmoji = document.getElementById('btn-emoji');
 const emojiPicker = document.getElementById('emoji-picker');
 
-// --- APP STATE ---
 let currentUser = "";
 let dmManager = null;
 let isRegistering = false; 
 
 const debugBox = document.getElementById('debug-console');
 
-// --- DEBUG LOGGER ---
 function debug(msg) {
     const time = new Date().toLocaleTimeString().split(' ')[0];
     if(debugBox) debugBox.innerHTML += `<div>> [${time}] ${msg}</div>`;
@@ -31,7 +26,6 @@ function debug(msg) {
     console.log(msg);
 }
 
-// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     debug("SYSTEM READY: Waiting for connection.");
     
@@ -45,13 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const logoutBtn = document.getElementById('logout-icon-small');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             client.disconnect();
             location.reload();
         });
     }
 
-    // Attach Attach button listener
     const btnAttach = document.getElementById('btn-attach');
     const inpFileUpload = document.getElementById('inp-file-upload');
     if (btnAttach && inpFileUpload) {
@@ -59,20 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
             inpFileUpload.click();
         });
         inpFileUpload.addEventListener('change', () => {
-            debug("FILE: Image selected for upload (Upload not implemented).");
-            if (dmManager) dmManager.sendDM(`(Attachment: ${inpFileUpload.files[0].name})`);
-            inpFileUpload.value = ''; // Clear input
+            debug("FILE: Image selected (Upload not implemented).");
+            if (dmManager && inpFileUpload.files.length > 0) {
+                 dmManager.sendDM(`(Attachment: ${inpFileUpload.files[0].name})`);
+            }
+            inpFileUpload.value = '';
         });
     }
 
-    // Initialize Emojis
     initEmojiPicker();
     
     toggleAuthMode(false);
 });
 
-
-// --- AUTHENTICATION HANDLERS ---
 
 function toggleAuthMode(eventOrBool) {
     if (typeof eventOrBool === 'boolean') {
@@ -100,7 +93,6 @@ function handleAuthSubmit() {
 
     if (!user || !pass) {
         debug("ERROR: Missing credentials.");
-        alert("Username and Password are required.");
         return;
     }
     
@@ -121,7 +113,6 @@ function handleAuthSubmit() {
     });
 }
 
-// --- EMOJI LOGIC ---
 const emojis = ["😀","😂","😍","😎","👍","👎","🔥","❤️","✅","🎉","🤔","😭","👀","💪","🙏","👋","🌹","🍀","🚀","💻","☕","🍕"];
 
 function initEmojiPicker() {
@@ -134,7 +125,7 @@ function initEmojiPicker() {
         s.onclick = (e) => {
             e.preventDefault();
             if (inpMsg) inpMsg.value += em;
-            if (emojiPicker) emojiPicker.classList.add('hidden'); // Close after click
+            if (emojiPicker) emojiPicker.classList.add('hidden');
         };
         emojiPicker.appendChild(s);
     });
@@ -155,7 +146,6 @@ function initEmojiPicker() {
 }
 
 
-// --- NETWORK HANDLER ---
 const handleIncoming = (raw) => {
     debug("RX: " + raw);
 
@@ -172,9 +162,9 @@ const handleIncoming = (raw) => {
     }
     
     if (raw === "AUTH_FAILED") { 
-        debug("ERROR: Authentication Failed (Bad Password/User or Registration Error).");
+        debug("ERROR: Authentication Failed.");
         alert("Authentication failed. Check credentials or register a new user."); 
-        document.getElementById('layer-login').style.display = 'flex';
+        UI.toggleLogin(true);
         return; 
     }
 
@@ -186,19 +176,26 @@ const handleIncoming = (raw) => {
         const p = raw.split(":", 3);
         if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
     }
+
+    if (raw.startsWith("DM:") && raw.includes("Attachment:")) {
+        const p = raw.split(":", 3);
+        if(p.length === 3) dmManager.handleIncomingDM(p[1], p[2]);
+    }
 };
 
 const handleStatus = (act) => {
+    const loginLayer = document.getElementById('layer-login');
+    if (loginLayer && act) loginLayer.classList.add('hidden');
+    
     UI.setStatus(act);
     if(act) debug("WebSocket Connected!");
     else debug("WebSocket Disconnected/Failed");
 };
 
-// Initialize client 
+
 const client = new SocketClient(handleIncoming, handleStatus);
 
 
-// --- DM MANAGER PROTOTYPE ---
 class DMManager {
     constructor(currentUser, onSendMessage) {
         this.currentUser = currentUser;
@@ -214,6 +211,9 @@ class DMManager {
         
         const avatar = document.getElementById('user-profile-avatar');
         if(avatar) avatar.innerText = currentUser.charAt(0).toUpperCase();
+        
+        const avatarSmall = document.querySelector('.nav-icon.active .avatar-small');
+        if(avatarSmall) avatarSmall.innerText = currentUser.charAt(0).toUpperCase();
 
         if (document.getElementById('form-chat')) {
             document.getElementById('form-chat').addEventListener('submit', (e) => {
@@ -234,7 +234,7 @@ class DMManager {
             const match = u.match(/(.*)\((.*)\)/);
             if(match) return { name: match[1], status: match[2] };
             return { name: u, status: 'Offline' };
-        }).filter(u => u.name !== this.currentUser); // Filter out self
+        }).filter(u => u.name !== this.currentUser);
 
         this.renderSidebar();
     }
@@ -281,7 +281,6 @@ class DMManager {
         this.toggleMobileView('chat');
         this.renderSidebar(); 
         
-        // Request history from MongoDB
         this.onSendMessage(`HISTORY:${username}`);
     }
 
