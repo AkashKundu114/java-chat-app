@@ -1,6 +1,6 @@
 # 🚀 Enterprise Chat Application  
-A full-stack, multi-threaded chat system built with **Java (TCP Sockets)**, **Node.js (WebSocket Bridge)**, and a **Responsive Web Client**.  
-Designed to demonstrate **concurrency**, **raw networking**, **offline message delivery**, and **QR-based secure authentication**.
+A full-stack, multi-threaded chat system built with **Java (TCP Sockets)**, **Node.js (WebSocket Bridge)**, and a **Responsive Web Client** featuring a **Retro Terminal UI** and **MongoDB Atlas (Cloud Database)**.
+Designed to demonstrate **concurrency**, **raw networking**, **offline message delivery**, and **simple login system**. 
 
 ---
 
@@ -24,14 +24,14 @@ Designed to demonstrate **concurrency**, **raw networking**, **offline message d
 - Node bridge converts **WebSockets ↔ TCP**  
 - Allows browsers to communicate with the Java server  
 
-### 🔹 QR Code Login (Password-less)  
+### 🔹 QR Code Login (Password-less) [Soon..] 
 - Admin generates secure login tokens  
 - Users scan QR from mobile to authenticate  
 
 ### 🔹 Responsive Web UI  
 - Mobile-first  
 - Powered by **Tailwind CSS**  
-- DM sidebar, chat window, and admin console  
+- DM sidebar, chat window  
 
 ---
 
@@ -66,9 +66,10 @@ Designed to demonstrate **concurrency**, **raw networking**, **offline message d
 ## 🛠 Prerequisites
 
 - **Java JDK 17+**  
-- **Node.js (LTS)**  
+- **Node.js (LTS Version)**  
+- **MongoDB Atlas** Account (For the cloud database URI)
+- **LocalTunnel CLI** (`npm install -g localtunnel`)
 - **Git**  
-- Optional: **Ngrok** for public access  
 
 ---
 
@@ -82,7 +83,9 @@ cd java-chat-app
 
 ---
 
-## 1️⃣ Start Java Backend (Terminal 1)
+## 1️⃣ Compile & Server Prep (Terminal 1)
+
+This terminal starts the Java application, connects to the cloud database, and provides the administration console.
 
 Navigate:
 ```bash
@@ -92,22 +95,26 @@ mkdir -p bin
 
 Compile:
 ```bash
-javac -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java
+javac -cp "lib/mongo-java-driver-3.12.14.jar;src" -d bin src/com/chat/Main.java src/com/chat/services/*.java src/com/chat/threads/*.java src/com/chat/core/*.java src/com/chat/config/*.java src/com/chat/constants/*.java src/com/chat/models/*.java src/com/chat/utils/*.java
 ```
 
-Run:
+Server:
 ```bash
-java -cp bin com.chat.Main
+java -cp "lib/mongo-java-driver-3.12.14.jar;bin" com.chat.Main
 ```
 
-Register a User (copy the token):
+Once the server is running, use this command to create users:
+```bash
+create <username> <password>
 ```
-register Akash
-```
+Example: create Akash MyPass123
+
 
 ---
 
-## 2️⃣ Start Node Bridge (Terminal 2)
+## 2️⃣ Node Bridge Setup (Terminal 2)
+
+This terminal runs the Node process, which translates browser WebSockets to Java TCP Sockets.
 
 ```bash
 cd 2_bridge_node
@@ -117,13 +124,16 @@ npm start
 
 ---
 
-## 3️⃣ (Optional) Expose to Internet With Ngrok (Terminal 3)
+## 3️⃣ Start Public Access Tunnel (Terminal 3)
 
+This terminal provides the final, secure, and permanent public access link.
+
+Start the permanent tunnel:
 ```bash
-ngrok http 8080
+lt --port 8080 --subdomain johnnywalker
 ```
 
-Copy the forwarding URL (e.g., `https://abc.ngrok-free.app`).
+Note: This will print the public URL: [https://johnnywalker.loca.lt](https://johnnywalker.loca.lt)
 
 ---
 
@@ -143,11 +153,9 @@ python -m http.server 8000
 
 ## 🔑 Login Instructions
 
-1. Open the website on your phone  
-2. Enter the Ngrok/localhost URL in the “Bridge IP” field  
-3. On your PC, open `admin.html`  
-4. Paste token → Generate QR  
-5. Scan QR using the phone  
+1. Open the website on your phone
+2. Registration (First Time Only): Click REGISTER and create a new username/password.
+3. Login: Use your new credentials.
 
 Done! You are logged in.
 
