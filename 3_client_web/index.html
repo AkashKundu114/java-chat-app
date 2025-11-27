@@ -3,101 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JavaChat Retro</title>
+    <title>JavaChat Retro (React)</title>
     <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <div id="root"></div>
 
-    <div id="layer-login">
-        <div class="login-card">
-            <h2 class="login-title" id="login-title">JOHNNY WALKER</h2>
-            
-            <div id="debug-console" style="font-family:monospace; font-size:10px; color:var(--accent-primary); background:var(--bg-dark); padding:5px; margin-bottom:10px; height:40px; overflow:hidden; border:2px solid var(--border-strong);">> READY</div>
-            
-            <input id="inp-ip" type="text" class="input-box hidden" value="" aria-hidden="true" readonly>
-            
-            <input id="inp-username" type="text" class="input-box" placeholder="Username">
-            <input id="inp-password" type="password" class="input-box" placeholder="Password">
-
-            <button id="btn-submit-auth" class="btn btn-primary" style="margin-bottom: 12px;">
-                <i data-lucide="log-in" style="width:20px;"></i> LOGIN
-            </button>
-            
-            <button id="btn-toggle-mode" class="btn btn-secondary">
-                REGISTER
-            </button>
-        </div>
-    </div>
-
-    <div id="layer-app" class="app-container hidden">
-        
-        <aside class="nav-panel">
-            <div class="nav-top">
-                <span class="company-header">JOHNNY WALKER CO.</span>
-            </div>
-            <div class="nav-bottom">
-                <button class="nav-icon logout" id="logout-icon-small"><i data-lucide="log-out"></i></button>
-            </div>
-        </aside>
-
-        <aside id="sidebar-panel" class="contact-panel">
-            <div class="search-bar">
-                <i data-lucide="search" class="search-icon"></i>
-                <input type="text" placeholder="Search contacts..." class="search-input">
-            </div>
-
-            <div class="contact-section">
-                <div class="section-title">PEOPLE</div>
-                <div id="sidebar-list" class="contact-list no-scrollbar">
-                </div>
-            </div>
-        </aside>
-
-        <main id="main-chat-panel" class="chat-main-panel hidden">
-            <div class="chat-header">
-                <div class="chat-header-info">
-                    <button id="btn-back-contact" class="btn-icon mobile-only"><i data-lucide="arrow-left"></i></button>
-                    <div class="avatar-small" id="chat-header-avatar">?</div>
-                    <div>
-                        <span class="chat-header-name" id="chat-header-name">Select Contact</span>
-                        <span class="chat-header-status" id="chat-header-status">OFFLINE</span>
-                    </div>
-                </div>
-                <div class="chat-header-actions">
-                    <i data-lucide="more-horizontal" class="header-icon"></i>
-                </div>
-            </div>
-
-            <div id="chat-area" class="chat-messages no-scrollbar">
-                <div class="welcome-message">
-                    <h3>SYSTEM INITIATED</h3>
-                    <p>STATUS: ONLINE. WAITING FOR USER INPUT...</p>
-                </div>
-            </div>
-
-            <!-- CHAT INPUT FORM: FIXED AND WIDE -->
-            <form id="form-chat" class="chat-input-container">
-                <input type="file" id="inp-file-upload" class="hidden" accept="image/*">
-                
-                <!-- ATTACHMENT ICON -->
-                <button type="button" id="btn-attach" class="input-action-btn"><i data-lucide="paperclip"></i></button>
-                
-                <!-- TYPING AREA: THIS IS YOUR TEXT BOX -->
-                <input id="inp-message" type="text" placeholder="ENTER MESSAGE / COMMAND..." class="message-input">
-                
-                <!-- EMOJI ICON -->
-                <button type="button" id="btn-emoji" class="input-action-btn"><i data-lucide="smile"></i></button>
-                
-                <!-- SEND ICON -->
-                <button type="submit" class="input-action-btn send-btn"><i data-lucide="send"></i></button>
-            </form>
-
-            <div id="emoji-picker" class="emoji-picker hidden">
-            </div>
-        </main>
-    </div>
-
-    <script type="module" src="src/main.js"></script>
+    <script type="text/babel" src="App.jsx"></script>
 </body>
 </html>

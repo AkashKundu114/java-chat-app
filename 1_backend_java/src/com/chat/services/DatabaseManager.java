@@ -2,7 +2,7 @@ package com.chat.services;
 
 import com.chat.config.ServerConfig;
 import com.chat.utils.Logger;
-import com.chat.utils.PasswordHasher; // Import Hasher
+import com.chat.utils.PasswordHasher;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
@@ -27,12 +27,10 @@ public class DatabaseManager {
         }
     }
 
-    // --- USER MANAGEMENT ---
     public static boolean createUser(String username, String password) {
         MongoCollection<Document> users = database.getCollection("users");
         if (users.find(Filters.eq("_id", username)).first() != null) return false;
-        
-        // HASH THE PASSWORD BEFORE STORING
+    
         String hashedPassword = PasswordHasher.hash(password);
         
         Document doc = new Document("_id", username)
@@ -48,7 +46,7 @@ public class DatabaseManager {
         if (user == null) return false;
         
         String storedHash = user.getString("password");
-        return PasswordHasher.verify(password, storedHash); // Verify hash
+        return PasswordHasher.verify(password, storedHash); 
     }
 
     public static List<String> getAllUsers() {
@@ -57,7 +55,6 @@ public class DatabaseManager {
         return list;
     }
 
-    // --- MESSAGES ---
     public static void saveMessage(String from, String to, String text) {
         Document doc = new Document("from", from).append("to", to).append("text", text).append("ts", System.currentTimeMillis());
         database.getCollection("messages").insertOne(doc);

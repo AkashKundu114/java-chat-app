@@ -12,7 +12,7 @@ public class Main {
         try {
             System.out.println("::: JAVA CHAT SERVER (DB) :::");
             
-            DatabaseManager.init(); // Connect to MongoDB
+            DatabaseManager.init(); 
             
             System.out.println("Host IP: " + InetAddress.getLocalHost().getHostAddress());
             
