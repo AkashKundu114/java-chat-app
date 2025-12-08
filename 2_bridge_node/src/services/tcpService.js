@@ -4,13 +4,24 @@ import { log } from '../utils/logger.js';
 
 export function createJavaConnection(onMessage, onDisconnect) {
     const client = new net.Socket();
+    let buffer = '';
 
     client.connect(CONFIG.JAVA_PORT, CONFIG.JAVA_HOST, () => {
         log('TCP', 'Linked to Java Backend');
     });
 
     client.on('data', (data) => {
-        onMessage(data.toString());
+        buffer += data.toString();
+
+        let lines = buffer.split('\n');
+
+        buffer = lines.pop(); 
+
+        for (let line of lines) {
+            if (line.trim()) {
+                onMessage(line.trim());
+            }
+        }
     });
 
     client.on('close', () => {
