@@ -4,7 +4,7 @@ import { log } from '../utils/logger.js';
 
 export function createJavaConnection(onMessage, onDisconnect) {
     const client = new net.Socket();
-    let buffer = '';
+    let buffer = ''; 
 
     client.connect(CONFIG.JAVA_PORT, CONFIG.JAVA_HOST, () => {
         log('TCP', 'Linked to Java Backend');

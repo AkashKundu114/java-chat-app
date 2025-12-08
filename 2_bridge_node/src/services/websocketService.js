@@ -7,8 +7,11 @@ import { createJavaConnection } from './tcpService.js';
 export function startBridge() {
     
     const httpServer = http.createServer((req, res) => {
-        res.writeHead(404, {'Content-Type': 'text/plain'});
-        res.end('Bridge is running. Use the application interface to connect.');
+        res.writeHead(200, {
+            'Content-Type': 'text/plain',
+            'Access-Control-Allow-Origin': '*' 
+        });
+        res.end('Bridge is Online. WebSocket is ready.');
     });
 
     const wss = new WebSocketServer({ server: httpServer });
@@ -19,11 +22,11 @@ export function startBridge() {
 
     wss.on('connection', (ws, req) => {
         const ip = req.socket.remoteAddress;
-        log('WS', `New Web Client: ${ip}`);
+        log('WS', `New Web Client Connected: ${ip}`);
         
         const javaSocket = createJavaConnection(
             (msg) => {
-                if (ws.readyState === 1) ws.send(msg.trim());
+                if (ws.readyState === 1) ws.send(msg);
             },
             () => {
                 ws.close();
@@ -37,6 +40,10 @@ export function startBridge() {
         ws.on('close', () => {
             log('WS', 'Client disconnected');
             javaSocket.end();
+        });
+
+        ws.on('error', (err) => {
+            log('WS', 'Error: ' + err.message);
         });
     });
 }
