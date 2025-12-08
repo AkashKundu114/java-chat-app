@@ -22,13 +22,25 @@ public class ClientWorker extends Thread {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             if (!authenticate()) { socket.close(); return; }
+            
+            // Register calls flushOfflineMessages inside ClientManager
             ClientManager.register(username, this);
 
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("TO:")) {
+                    // Safe split for large payloads
                     String[] p = line.split(":", 3);
-                    if (p.length == 3) ClientManager.sendPrivateMessage(username, p[1], p[2]);
+                    if (p.length == 3) {
+                        String recipient = p[1];
+                        String content = p[2];
+                        
+                        if (content.startsWith("$$FILE$$")) {
+                            Logger.info("File transfer: " + username + " -> " + recipient);
+                        }
+                        
+                        ClientManager.sendPrivateMessage(username, recipient, content);
+                    }
                 }
                 if (line.startsWith("HISTORY:")) {
                     String target = line.split(":")[1];
@@ -47,10 +59,8 @@ public class ClientWorker extends Thread {
         out.println(Messages.AUTH_REQ);
         String line = in.readLine();
         
-        // Expected Format: AUTH:<TYPE>:<user>:<pass>
         if (line != null && line.startsWith("AUTH:")) {
             String[] parts = line.split(":");
-            
             if (parts.length == 4) {
                 String type = parts[1];
                 String user = parts[2];
@@ -59,12 +69,10 @@ public class ClientWorker extends Thread {
                 boolean isAuthenticated = false;
                 
                 if (type.equals("REGISTER")) {
-                    // Attempt to register; returns true if successful (meaning we are authenticated)
                     isAuthenticated = AuthManager.registerPermanentUser(user, pass);
                     if (isAuthenticated) Logger.info("New user registered: " + user);
                 }
                 
-                // Then, attempt to log in (needed after successful registration or for standard login)
                 if (type.equals("LOGIN") || isAuthenticated) {
                     isAuthenticated = AuthManager.verifyLogin(user, pass);
                 }

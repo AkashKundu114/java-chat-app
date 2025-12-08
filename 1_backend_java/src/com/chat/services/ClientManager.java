@@ -11,6 +11,9 @@ public class ClientManager {
     public static void register(String username, ClientWorker worker) {
         activeClients.put(username, worker);
         broadcastUserList();
+        
+        // Trigger DB flush for offline messages on login
+        flushOfflineMessages(username);
     }
 
     public static void unregister(String username) {
@@ -21,10 +24,30 @@ public class ClientManager {
     }
 
     public static void sendPrivateMessage(String sender, String recipient, String content) {
-        DatabaseManager.saveMessage(sender, recipient, content);
-
         ClientWorker worker = activeClients.get(recipient);
-        if (worker != null) worker.sendRawMessage("DM:" + sender + ":" + content);
+        boolean isOnline = (worker != null);
+
+        // 1. Save to DB with 'delivered' status based on online state
+        DatabaseManager.saveMessage(sender, recipient, content, isOnline);
+
+        // 2. If online, send immediately
+        if (isOnline) {
+            worker.sendRawMessage("DM:" + sender + ":" + content);
+        } 
+        // If offline, we simply do nothing. It's saved in DB as delivered=false.
+        // It will be picked up by getAndMarkUnreadMessages next time they login.
+    }
+    
+    // NEW: Pulls unread from DB
+    private static void flushOfflineMessages(String username) {
+        List<String> pending = DatabaseManager.getAndMarkUnreadMessages(username);
+        
+        ClientWorker worker = activeClients.get(username);
+        if (worker != null && !pending.isEmpty()) {
+            for (String msg : pending) {
+                worker.sendRawMessage(msg);
+            }
+        }
     }
     
     public static void loadHistory(String me, String other) {
@@ -37,7 +60,6 @@ public class ClientManager {
 
     private static void broadcastUserList() {
         StringBuilder sb = new StringBuilder("USERS:");
-        
         List<String> all = DatabaseManager.getAllUsers();
         
         for (String u : all) {
