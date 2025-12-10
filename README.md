@@ -133,7 +133,7 @@ Start the permanent tunnel:
 lt --port 8080 --subdomain shamsug
 ```
 
-Note: This will print the public URL: [https://shamsug.loca.lt](https://shamsug.loca.lt)
+Note: This will print the public URL: [https://cathy-chat.netlify.app/](https://cathy-chat.netlify.app/)
 
 ---
 
