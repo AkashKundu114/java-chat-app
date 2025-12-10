@@ -130,10 +130,10 @@ This terminal provides the final, secure, and permanent public access link.
 
 Start the permanent tunnel:
 ```bash
-lt --port 8080 --subdomain shamsug
+lt --port 8080 --subdomain cathy-chat-app
 ```
 
-Note: This will print the public URL: [https://cathy-chat.netlify.app/](https://cathy-chat.netlify.app/)
+Note: This will print the public URL: [https://cathy-chat.netlify.app/](https://cathy-chat.netlify.app)
 
 ---
 
