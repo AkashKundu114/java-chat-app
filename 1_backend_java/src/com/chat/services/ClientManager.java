@@ -12,7 +12,6 @@ public class ClientManager {
         activeClients.put(username, worker);
         broadcastUserList();
         
-        // Trigger DB flush for offline messages on login
         flushOfflineMessages(username);
     }
 
@@ -27,18 +26,13 @@ public class ClientManager {
         ClientWorker worker = activeClients.get(recipient);
         boolean isOnline = (worker != null);
 
-        // 1. Save to DB with 'delivered' status based on online state
         DatabaseManager.saveMessage(sender, recipient, content, isOnline);
 
-        // 2. If online, send immediately
         if (isOnline) {
             worker.sendRawMessage("DM:" + sender + ":" + content);
         } 
-        // If offline, we simply do nothing. It's saved in DB as delivered=false.
-        // It will be picked up by getAndMarkUnreadMessages next time they login.
     }
     
-    // NEW: Pulls unread from DB
     private static void flushOfflineMessages(String username) {
         List<String> pending = DatabaseManager.getAndMarkUnreadMessages(username);
         

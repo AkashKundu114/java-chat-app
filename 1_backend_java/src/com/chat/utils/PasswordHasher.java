@@ -6,9 +6,6 @@ import java.util.Base64;
 
 public class PasswordHasher {
 
-    /**
-     * Hashes a plain text password using SHA-256.
-     */
     public static String hash(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -20,9 +17,6 @@ public class PasswordHasher {
         }
     }
 
-    /**
-     * Verifies a plain text password against a stored hash.
-     */
     public static boolean verify(String plaintextPassword, String storedHash) {
         String inputHash = hash(plaintextPassword);
         return inputHash.equals(storedHash);

@@ -23,13 +23,11 @@ public class ClientWorker extends Thread {
 
             if (!authenticate()) { socket.close(); return; }
             
-            // Register calls flushOfflineMessages inside ClientManager
             ClientManager.register(username, this);
 
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("TO:")) {
-                    // Safe split for large payloads
                     String[] p = line.split(":", 3);
                     if (p.length == 3) {
                         String recipient = p[1];

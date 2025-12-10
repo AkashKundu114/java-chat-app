@@ -19,7 +19,7 @@ public class Main {
             new Thread(() -> new ConnectionListener().start()).start();
 
             Scanner sc = new Scanner(System.in);
-            System.out.println("ADMIN CMD: create <user> <pass> (For quick manual creation)");
+            System.out.println("ADMIN CMD: create <user> <pass> (for quick manual creation)");
             
             while (true) {
                 String cmd = sc.nextLine();

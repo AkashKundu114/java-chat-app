@@ -11,14 +11,19 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level; 
 
 public class DatabaseManager {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
 
     public static void init() {
+        java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(Level.SEVERE);
+        java.util.logging.Logger.getLogger("com.mongodb").setLevel(Level.SEVERE);
+
         try {
             Logger.info("Connecting to MongoDB...");
             mongoClient = new MongoClient(new MongoClientURI(ServerConfig.MONGO_URI));
@@ -28,8 +33,6 @@ public class DatabaseManager {
             Logger.error("DB Error: " + e.getMessage());
         }
     }
-
-    // --- USER MANAGEMENT ---
 
     public static boolean createUser(String username, String password) {
         MongoCollection<Document> users = database.getCollection("users");
@@ -59,14 +62,10 @@ public class DatabaseManager {
         return list;
     }
 
-    // --- MESSAGE MANAGEMENT (PER-USER DB PATTERN) ---
-
     public static void saveMessage(String from, String to, String text, boolean isDelivered) {
         long ts = System.currentTimeMillis();
 
-        // 1. Save to SENDER'S Box (History)
-        // We assume sent messages are always 'delivered' to the sender's own history
-        Document senderCopy = new Document("contact", to) // The other person
+        Document senderCopy = new Document("contact", to) 
                 .append("sender", from)
                 .append("text", text)
                 .append("type", "sent")
@@ -74,13 +73,12 @@ public class DatabaseManager {
         
         database.getCollection("box_" + from).insertOne(senderCopy);
 
-        // 2. Save to RECIPIENT'S Box (Inbox)
-        Document recipientCopy = new Document("contact", from) // The other person
+        Document recipientCopy = new Document("contact", from)
                 .append("sender", from)
                 .append("text", text)
                 .append("type", "received")
                 .append("ts", ts)
-                .append("delivered", isDelivered); // Only recipient cares if it was delivered live
+                .append("delivered", isDelivered); 
         
         database.getCollection("box_" + to).insertOne(recipientCopy);
     }
@@ -88,14 +86,11 @@ public class DatabaseManager {
     public static List<String> getHistory(String owner, String otherPerson) {
         List<String> history = new ArrayList<>();
         try {
-            // We only need to query the 'owner's' box.
-            // This is efficient: No complex OR queries across a massive global table.
             MongoCollection<Document> box = database.getCollection("box_" + owner);
             
             Bson filter = Filters.eq("contact", otherPerson);
             
             for (Document d : box.find(filter).sort(new Document("ts", 1))) {
-                // Reconstruct format: DM:sender:content
                 history.add("DM:" + d.getString("sender") + ":" + d.getString("text"));
             }
         } catch (Exception e) {
@@ -109,7 +104,6 @@ public class DatabaseManager {
         try {
             MongoCollection<Document> box = database.getCollection("box_" + username);
             
-            // Find messages in My Box where type='received' AND delivered=false
             Bson filter = Filters.and(
                 Filters.eq("type", "received"), 
                 Filters.eq("delivered", false)
@@ -119,7 +113,6 @@ public class DatabaseManager {
                 pendingMessages.add("DM:" + d.getString("sender") + ":" + d.getString("text"));
             }
             
-            // Mark them as delivered so they don't pop up again next login
             if (!pendingMessages.isEmpty()) {
                 box.updateMany(filter, Updates.set("delivered", true));
                 Logger.info("Flushed " + pendingMessages.size() + " offline messages to " + username);
