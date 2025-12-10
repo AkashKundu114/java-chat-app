@@ -30,25 +30,44 @@ const ChatMinimal = () => {
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
-  // --- COMBINE & SORT MESSAGES (FIXED) ---
-  const relevantServerMessages = messages.filter(msg => 
-    activeContact && (
-      msg.realSenderName === activeContact.name || 
-      (msg.realSenderName === user && activeContact.name)
+  // --- 1. FILTER & PREPARE MESSAGES ---
+  const relevantServerMessages = messages
+    .filter(msg => 
+      activeContact && (
+        msg.realSenderName === activeContact.name || 
+        (msg.realSenderName === user && activeContact.name)
+      )
     )
-  );
+    .map((msg, index) => ({ ...msg, _source: 'server', _index: index }));
 
-  const relevantLocalMessages = localMessages.filter(msg => 
-    activeContact && msg.to === activeContact.name
-  );
+  const relevantLocalMessages = localMessages
+    .filter(msg => activeContact && msg.to === activeContact.name)
+    .map((msg, index) => ({ ...msg, _source: 'local', _index: index }));
 
-  // Merge and Sort by Timestamp to allow mixed conversation flow
-  const allMessages = [...relevantServerMessages, ...relevantLocalMessages].sort((a, b) => a.id - b.id);
+  // --- 2. ROBUST SORTING (Fixes Mobile Sequence) ---
+  const allMessages = [...relevantServerMessages, ...relevantLocalMessages].sort((a, b) => {
+      // Primary Sort: Time
+      const timeDiff = a.id - b.id;
+      if (timeDiff !== 0) return timeDiff;
 
-  // Auto-scroll
+      // Tie-Breaker: If timestamps are identical (common in history batches)
+      // 1. If both are server messages, preserve original index (Stability)
+      if (a._source === 'server' && b._source === 'server') {
+          return a._index - b._index;
+      }
+      // 2. If one is server and one is local, Server comes first (History before New)
+      if (a._source === 'server') return -1;
+      return 1;
+  });
+
+  // --- 3. AUTO-SCROLL (Mobile Keyboard Fix) ---
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allMessages, activeContact]);
+    // Small timeout ensures DOM is ready after mobile keyboard resize
+    const timeoutId = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 100);
+    return () => clearTimeout(timeoutId);
+  }, [allMessages, activeContact, showEmojiPicker]);
 
   // --- HANDLERS ---
 
@@ -160,7 +179,6 @@ const ChatMinimal = () => {
         <div className="sticky top-0 z-20 flex items-center justify-between h-16 px-4 border-b md:px-6 bg-white/80 backdrop-blur-md border-gray-200/50">
           {activeContact ? (
             <div className="flex items-center gap-3">
-              {/* BACK BUTTON (Mobile) */}
               <button onClick={() => setActiveContact(null)} className="p-1 mr-1 text-gray-600 rounded-full md:hidden hover:bg-gray-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               </button>
@@ -176,7 +194,7 @@ const ChatMinimal = () => {
         </div>
 
         {/* Messages Canvas */}
-        <div className="z-10 flex-1 p-4 space-y-6 overflow-y-auto md:p-6">
+        <div className="z-10 flex-1 p-4 pb-24 space-y-6 overflow-y-auto md:p-6 md:pb-6">
           {!activeContact && (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
               <div className="flex items-center justify-center w-16 h-16 mb-4 border border-gray-100 shadow-sm bg-gray-50 rounded-2xl">
@@ -197,12 +215,12 @@ const ChatMinimal = () => {
               </div>
             );
           })}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
 
         {/* Input Area */}
-        <div className="z-20 p-3 md:p-4">
-          <div className="relative flex items-center max-w-4xl gap-2 p-2 mx-auto bg-white border border-gray-100 shadow-lg rounded-2xl">
+        <div className="z-20 p-3 bg-white border-t border-gray-100 md:p-4">
+          <div className="relative flex items-center max-w-4xl gap-2 p-2 mx-auto bg-white border border-gray-200 shadow-sm md:shadow-lg rounded-2xl">
             {showEmojiPicker && (
               <div ref={emojiPickerRef} className="absolute right-0 grid w-64 h-64 grid-cols-6 gap-2 p-3 overflow-y-auto bg-white border border-gray-200 shadow-xl bottom-16 rounded-2xl animate-fade-in-up" style={{ zIndex: 100 }}>
                 {POPULAR_EMOJIS.map((emoji, idx) => (
@@ -212,10 +230,10 @@ const ChatMinimal = () => {
             )}
             
             <form onSubmit={handleSendMessage} className="flex-1">
-              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={activeContact ? "Write a message..." : ""} disabled={!activeContact} className="w-full px-2 py-2 text-sm font-medium text-gray-800 placeholder-gray-400 bg-transparent border-none focus:ring-0" />
+              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={activeContact ? "Write a message..." : ""} disabled={!activeContact} className="w-full px-3 py-2 text-sm font-medium text-gray-800 placeholder-gray-400 bg-transparent border-none focus:ring-0" />
             </form>
             
-            <button type="button" disabled={!activeContact} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`p-2.5 rounded-xl transition-all ${showEmojiPicker ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}>
+            <button type="button" disabled={!activeContact} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`p-2 rounded-xl transition-all ${showEmojiPicker ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </button>
             
