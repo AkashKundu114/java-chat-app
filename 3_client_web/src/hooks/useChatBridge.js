@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const WS_URL = 'wss://johnnywalker.loca.lt'; 
+const WS_URL = 'wss://shamsug.loca.lt'; 
 
 export const useChatBridge = () => {
   const [socket, setSocket] = useState(null);
