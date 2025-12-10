@@ -20,25 +20,33 @@ const ChatMinimal = () => {
   const [activeContact, setActiveContact] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
+  // Local state for Optimistic UI (shows your messages instantly)
   const [localMessages, setLocalMessages] = useState([]); 
   
+  // Login Form States
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
+  // Refs
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, localMessages, activeContact]);
+
+  // --- HANDLERS ---
 
   const handleSendMessage = (e) => {
     if (e) e.preventDefault();
     if (!inputValue.trim() || !activeContact) return;
     
+    // 1. Send to Backend
     sendMessage(activeContact.name, inputValue);
     
+    // 2. Add to Local State (Optimistic Update)
     const newMsg = {
         id: Date.now(),
         realSenderName: user,
@@ -62,9 +70,10 @@ const ChatMinimal = () => {
     setInputValue((prev) => prev + emoji);
   };
 
+  // --- RENDER: LOGIN SCREEN ---
   if (authStatus !== 'authenticated') {
     return (
-      <div className="flex items-center justify-center h-screen px-4 bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="absolute inset-0 z-0 opacity-40" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
         <div className="z-10 w-full max-w-sm p-8 bg-white border border-gray-200 shadow-xl rounded-2xl">
           <div className="mb-8 text-center">
@@ -95,13 +104,14 @@ const ChatMinimal = () => {
     );
   }
 
-  const allMessages = [...messages, ...localMessages];
+  // --- MAIN CHAT UI ---
+  // FIX: Merge and sort by ID (timestamp) to fix message sequence
+  const allMessages = [...messages, ...localMessages].sort((a, b) => a.id - b.id);
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
-      
       {/* 1. SIDEBAR */}
-      <div className={`${activeContact ? 'hidden' : 'flex w-full'} md:flex md:w-80 flex-col bg-gray-100 border-r border-gray-200 z-20`}>
+      <div className="z-20 flex-col hidden bg-gray-100 border-r border-gray-200 md:flex w-80">
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-xl font-bold leading-none tracking-tight text-gray-900">Messages</h1>
@@ -133,25 +143,12 @@ const ChatMinimal = () => {
       </div>
 
       {/* 2. CHAT AREA */}
-      <div className={`${activeContact ? 'flex' : 'hidden'} md:flex relative flex-col flex-1 min-w-0 bg-white h-full`}>
+      <div className="relative flex flex-col flex-1 min-w-0 bg-white">
         <div className="absolute inset-0 z-0 bg-white" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-        
-        {/* Header */}
-        <div className="sticky top-0 z-20 flex items-center justify-between h-16 px-4 border-b md:px-6 bg-white/80 backdrop-blur-md border-gray-200/50">
+        <div className="sticky top-0 z-20 flex items-center justify-between h-16 px-6 border-b bg-white/80 backdrop-blur-md border-gray-200/50">
           {activeContact ? (
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setActiveContact(null)}
-                className="p-2 -ml-2 text-gray-600 transition-colors rounded-full md:hidden hover:bg-gray-100"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-
-              <div className="flex items-center justify-center font-bold text-white rounded-full shadow-sm w-9 h-9 bg-gradient-to-br from-yellow-300 to-yellow-500">
-                {activeContact.name.charAt(0).toUpperCase()}
-              </div>
+              <div className="flex items-center justify-center font-bold text-white rounded-full shadow-sm w-9 h-9 bg-gradient-to-br from-yellow-300 to-yellow-500">{activeContact.name.charAt(0).toUpperCase()}</div>
               <div className="leading-tight">
                 <h2 className="text-sm font-bold text-gray-900">{activeContact.name}</h2>
                 <p className="text-xs font-medium text-gray-500">{activeContact.status}</p>
@@ -162,8 +159,7 @@ const ChatMinimal = () => {
           )}
         </div>
 
-        {/* Messages Canvas */}
-        <div className="z-10 flex-1 p-4 space-y-6 overflow-y-auto md:p-6">
+        <div className="z-10 flex-1 p-6 space-y-6 overflow-y-auto">
           {!activeContact && (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
               <div className="flex items-center justify-center w-16 h-16 mb-4 border border-gray-100 shadow-sm bg-gray-50 rounded-2xl">
@@ -184,8 +180,8 @@ const ChatMinimal = () => {
             const isMe = msg.realSenderName === user;
             return (
               <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
-                <div className={`max-w-[85%] px-5 py-3 rounded-2xl shadow-sm text-sm relative border ${isMe ? 'bg-yellow-100 border-yellow-200 text-gray-800 rounded-br-none' : 'bg-[#E1F5FE] border-[#E1F5FE] text-gray-900 rounded-bl-none'}`}>
-                  <p className="leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p>
+                <div className={`max-w-[75%] px-5 py-3 rounded-2xl shadow-sm text-sm relative border ${isMe ? 'bg-yellow-100 border-yellow-200 text-gray-800 rounded-br-none' : 'bg-[#E1F5FE] border-[#E1F5FE] text-gray-900 rounded-bl-none'}`}>
+                  <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                   <span className={`text-[10px] block mt-1.5 font-bold ${isMe ? 'text-yellow-700/60' : 'text-blue-900/40'} text-right`}>{msg.time}</span>
                 </div>
               </div>
@@ -194,9 +190,8 @@ const ChatMinimal = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="z-20 p-3 bg-white border-t border-gray-100 md:p-4">
-          <div className="relative flex items-center max-w-4xl gap-2 p-2 mx-auto bg-white border border-gray-200 shadow-sm md:shadow-lg rounded-2xl">
+        <div className="z-20 p-4">
+          <div className="relative flex items-center max-w-4xl gap-2 p-2 mx-auto bg-white border border-gray-100 shadow-lg rounded-2xl">
             {showEmojiPicker && (
               <div ref={emojiPickerRef} className="absolute right-0 grid w-64 h-64 grid-cols-6 gap-2 p-3 overflow-y-auto bg-white border border-gray-200 shadow-xl bottom-16 rounded-2xl animate-fade-in-up" style={{ zIndex: 100 }}>
                 {POPULAR_EMOJIS.map((emoji, idx) => (
@@ -207,11 +202,11 @@ const ChatMinimal = () => {
             
             {/* Input Box */}
             <form onSubmit={handleSendMessage} className="flex-1">
-              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={activeContact ? "Write a message..." : ""} disabled={!activeContact} className="w-full px-3 py-2 text-sm font-medium text-gray-800 placeholder-gray-400 bg-transparent border-none focus:ring-0" />
+              <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={activeContact ? "Write a message..." : ""} disabled={!activeContact} className="w-full px-2 py-2 text-sm font-medium text-gray-800 placeholder-gray-400 bg-transparent border-none focus:ring-0" />
             </form>
             
             {/* Emoji Toggle */}
-            <button type="button" disabled={!activeContact} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`p-2 rounded-xl transition-all ${showEmojiPicker ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}>
+            <button type="button" disabled={!activeContact} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`p-2.5 rounded-xl transition-all ${showEmojiPicker ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </button>
             
