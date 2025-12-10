@@ -7,16 +7,29 @@ export const useChatBridge = () => {
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [user, setUser] = useState(null); 
+  
   const [authStatus, setAuthStatus] = useState('disconnected');
 
   const pendingCreds = useRef(null);
+  const heartbeatInterval = useRef(null);
+  const reconnectTimeout = useRef(null);
+  const isMounted = useRef(true);
 
-  useEffect(() => {
+  const connect = () => {
+    if (!isMounted.current) return;
+
     const ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
       console.log('Connected to Bridge');
-      setAuthStatus('connected');
+      setAuthStatus('connected'); 
+
+      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send("PING");
+        }
+      }, 30000);
 
       const saved = localStorage.getItem('chat_auth');
       if (saved) {
@@ -32,13 +45,41 @@ export const useChatBridge = () => {
 
     ws.onmessage = (event) => {
       const msg = event.data;
+      if (!msg || msg === 'PONG') return; 
       handleProtocol(msg, ws);
     };
 
-    ws.onclose = () => setAuthStatus('disconnected');
+    ws.onclose = () => {
+      console.log("Disconnected. Attempting reconnect...");
+      
+      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
+      
+      if (isMounted.current) {
+        reconnectTimeout.current = setTimeout(() => {
+          console.log("Reconnecting...");
+          connect(); 
+        }, 3000);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error("Socket Error:", err);
+      ws.close(); 
+    };
     
     setSocket(ws);
-    return () => ws.close();
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+    connect();
+
+    return () => {
+      isMounted.current = false;
+      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      if (socket) socket.close();
+    };
   }, []);
 
   const handleProtocol = (rawMsg, ws) => {
@@ -102,7 +143,7 @@ export const useChatBridge = () => {
   const logout = () => {
     localStorage.removeItem('chat_auth'); 
     setUser(null);                        
-    setAuthStatus('connected');          
+    setAuthStatus('connected');           
     setContacts([]);                      
     setMessages([]);
   };
