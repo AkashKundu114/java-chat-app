@@ -14,7 +14,7 @@ const POPULAR_EMOJIS = [
 ];
 
 const ChatMinimal = () => {
-  const { socket, messages, contacts, user, authStatus, login } = useChatBridge();
+  const { socket, messages, contacts, user, authStatus, login, logout } = useChatBridge();
   
   const [inputValue, setInputValue] = useState('');
   const [activeContact, setActiveContact] = useState(null);
@@ -44,10 +44,7 @@ const ChatMinimal = () => {
   const allMessages = [...relevantServerMessages, ...relevantLocalMessages].sort((a, b) => {
       const timeDiff = a.id - b.id;
       if (timeDiff !== 0) return timeDiff;
-
-      if (a._source === 'server' && b._source === 'server') {
-          return a._index - b._index;
-      }
+      if (a._source === 'server' && b._source === 'server') return a._index - b._index;
       if (a._source === 'server') return -1;
       return 1;
   });
@@ -124,12 +121,21 @@ const ChatMinimal = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       
-      {/* 1. SIDEBAR (Responsive) */}
+      {/* 1. SIDEBAR */}
       <div className={`${activeContact ? 'hidden' : 'flex'} md:flex w-full md:w-80 flex-col bg-gray-100 border-r border-gray-200 z-20 transition-all duration-300`}>
         <div className="p-6">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold leading-none tracking-tight text-gray-900">Messages</h1>
-            <p className="text-xs font-medium text-gray-500 mt-1.5">Logged in as <span className="text-gray-900">{user}</span></p>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-bold leading-none tracking-tight text-gray-900">Messages</h1>
+              <p className="text-xs font-medium text-gray-500 mt-1.5">Logged in as <span className="text-gray-900">{user}</span></p>
+            </div>
+            {/* LOGOUT BUTTON */}
+            <button 
+              onClick={logout}
+              className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
           </div>
           <div className="relative">
             <input className="w-full px-4 py-2 pl-10 text-sm font-medium placeholder-gray-400 transition-all bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-100 focus:border-yellow-200" placeholder="Search chats..." />
@@ -157,7 +163,7 @@ const ChatMinimal = () => {
         </div>
       </div>
 
-      {/* 2. CHAT AREA (Responsive) */}
+      {/* 2. CHAT AREA */}
       <div className={`${activeContact ? 'flex' : 'hidden'} md:flex relative flex-col flex-1 min-w-0 bg-white`}>
         <div className="absolute inset-0 z-0 bg-white" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
         

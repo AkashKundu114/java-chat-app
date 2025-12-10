@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const WS_URL = 'wss://cathy-chat-app.loca.lt';
+const WS_URL = 'wss://cathy-chat-app.loca.lt'; 
 
 export const useChatBridge = () => {
   const [socket, setSocket] = useState(null);
@@ -32,7 +32,6 @@ export const useChatBridge = () => {
 
     ws.onmessage = (event) => {
       const msg = event.data;
-      console.log('Raw In:', msg);
       handleProtocol(msg, ws);
     };
 
@@ -90,9 +89,7 @@ export const useChatBridge = () => {
 
   const login = (username, password, isRegister) => {
     if (!socket) return;
-    
     pendingCreds.current = { username, password };
-    
     const type = isRegister ? 'REGISTER' : 'LOGIN';
     socket.send(`AUTH:${type}:${username}:${password}`);
   };
@@ -102,5 +99,13 @@ export const useChatBridge = () => {
     socket.send(`TO:${recipient}:${text}`);
   };
 
-  return { socket, messages, contacts, user, authStatus, login, sendMessage };
+  const logout = () => {
+    localStorage.removeItem('chat_auth'); 
+    setUser(null);                        
+    setAuthStatus('connected');          
+    setContacts([]);                      
+    setMessages([]);
+  };
+
+  return { socket, messages, contacts, user, authStatus, login, sendMessage, logout };
 };
