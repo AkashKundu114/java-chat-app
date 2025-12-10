@@ -1,5 +1,5 @@
 # 🚀 Enterprise Chat Application  
-A full-stack, multi-threaded chat system built with **Java (TCP Sockets)**, **Node.js (WebSocket Bridge)**, and a **Responsive Web Client** featuring a **Retro Terminal UI** and **MongoDB Atlas (Cloud Database)**.
+A full-stack, multi-threaded chat system built with **Java (TCP Sockets)**, **Node.js (WebSocket Bridge)**, and a **Responsive Web Client** featuring a **Minimalist UI** and **MongoDB Atlas (Cloud Database)**.
 Designed to demonstrate **concurrency**, **raw networking**, **offline message delivery**, and **simple login system**. 
 
 ---
