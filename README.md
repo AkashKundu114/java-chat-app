@@ -130,10 +130,10 @@ This terminal provides the final, secure, and permanent public access link.
 
 Start the permanent tunnel:
 ```bash
-lt --port 8080 --subdomain johnnywalker
+lt --port 8080 --subdomain shamsug
 ```
 
-Note: This will print the public URL: [https://johnnywalker.loca.lt](https://johnnywalker.loca.lt)
+Note: This will print the public URL: [https://shamsug.loca.lt](https://shamsug.loca.lt)
 
 ---
 
