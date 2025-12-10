@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Ensure this matches your running bridge URL (wss://...)
-const WS_URL = 'wss://shamsug.loca.lt'; 
+const WS_URL = 'wss://cathy-chat-app.loca.lt';
 
 export const useChatBridge = () => {
   const [socket, setSocket] = useState(null);
@@ -10,7 +9,6 @@ export const useChatBridge = () => {
   const [user, setUser] = useState(null); 
   const [authStatus, setAuthStatus] = useState('disconnected');
 
-  // Keep track of credentials being tried so we can save them on success
   const pendingCreds = useRef(null);
 
   useEffect(() => {
@@ -20,14 +18,11 @@ export const useChatBridge = () => {
       console.log('Connected to Bridge');
       setAuthStatus('connected');
 
-      // --- AUTO-LOGIN LOGIC ---
       const saved = localStorage.getItem('chat_auth');
       if (saved) {
         try {
           const { username, password } = JSON.parse(saved);
-          // Auto-send login command
           ws.send(`AUTH:LOGIN:${username}:${password}`);
-          // Keep these as pending in case we need to re-verify
           pendingCreds.current = { username, password };
         } catch (e) {
           localStorage.removeItem('chat_auth');
@@ -53,15 +48,14 @@ export const useChatBridge = () => {
     } 
     else if (rawMsg === 'AUTH_FAILED') {
       alert("Login Failed / Session Expired");
-      setAuthStatus('connected'); // Show login screen
-      localStorage.removeItem('chat_auth'); // Clear bad creds
+      setAuthStatus('connected'); 
+      localStorage.removeItem('chat_auth'); 
     }
     else if (rawMsg.startsWith('AUTH_SUCCESS:')) {
       const username = rawMsg.split(':')[1];
       setUser(username);
       setAuthStatus('authenticated');
 
-      // --- SAVE SESSION ON SUCCESS ---
       if (pendingCreds.current) {
         localStorage.setItem('chat_auth', JSON.stringify(pendingCreds.current));
       }
@@ -97,7 +91,6 @@ export const useChatBridge = () => {
   const login = (username, password, isRegister) => {
     if (!socket) return;
     
-    // Store temporarily to save later on success
     pendingCreds.current = { username, password };
     
     const type = isRegister ? 'REGISTER' : 'LOGIN';
@@ -106,8 +99,6 @@ export const useChatBridge = () => {
 
   const sendMessage = (recipient, text) => {
     if (!socket) return;
-    // We do NOT add to 'messages' here because ChatMinimal handles the optimistic UI
-    // This prevents double rendering or sequencing issues.
     socket.send(`TO:${recipient}:${text}`);
   };
 

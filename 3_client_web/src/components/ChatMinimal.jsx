@@ -21,16 +21,13 @@ const ChatMinimal = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [localMessages, setLocalMessages] = useState([]); 
   
-  // Login Form States
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
-  // Refs
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
-  // --- 1. FILTER & PREPARE MESSAGES ---
   const relevantServerMessages = messages
     .filter(msg => 
       activeContact && (
@@ -44,32 +41,23 @@ const ChatMinimal = () => {
     .filter(msg => activeContact && msg.to === activeContact.name)
     .map((msg, index) => ({ ...msg, _source: 'local', _index: index }));
 
-  // --- 2. ROBUST SORTING (Fixes Mobile Sequence) ---
   const allMessages = [...relevantServerMessages, ...relevantLocalMessages].sort((a, b) => {
-      // Primary Sort: Time
       const timeDiff = a.id - b.id;
       if (timeDiff !== 0) return timeDiff;
 
-      // Tie-Breaker: If timestamps are identical (common in history batches)
-      // 1. If both are server messages, preserve original index (Stability)
       if (a._source === 'server' && b._source === 'server') {
           return a._index - b._index;
       }
-      // 2. If one is server and one is local, Server comes first (History before New)
       if (a._source === 'server') return -1;
       return 1;
   });
 
-  // --- 3. AUTO-SCROLL (Mobile Keyboard Fix) ---
   useEffect(() => {
-    // Small timeout ensures DOM is ready after mobile keyboard resize
     const timeoutId = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, 100);
     return () => clearTimeout(timeoutId);
   }, [allMessages, activeContact, showEmojiPicker]);
-
-  // --- HANDLERS ---
 
   const handleSendMessage = (e) => {
     if (e) e.preventDefault();
@@ -100,7 +88,6 @@ const ChatMinimal = () => {
     setInputValue((prev) => prev + emoji);
   };
 
-  // --- RENDER: LOGIN SCREEN ---
   if (authStatus !== 'authenticated') {
     return (
       <div className="flex items-center justify-center h-screen px-4 bg-gray-50">
@@ -134,7 +121,6 @@ const ChatMinimal = () => {
     );
   }
 
-  // --- MAIN CHAT UI ---
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       
