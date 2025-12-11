@@ -163,7 +163,7 @@ Done! You are logged in.
 
 ## 📸 Screenshots (Soon..)
 
-- Login screen  A
+- Login screen
 - Chat interface  
 - DM list  
 - Admin console  
