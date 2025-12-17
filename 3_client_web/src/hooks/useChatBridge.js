@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const WS_URL = 'wss://cathy-chat-app.loca.lt'; 
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
 
 export const useChatBridge = () => {
   const [socket, setSocket] = useState(null);
